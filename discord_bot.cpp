@@ -32,8 +32,11 @@ void discord_handle() {
 /*
  * Entry point to send a message to discord.
  */
-void discord_toDiscord() {
-    dcore->toDiscord();
+void discord_toDiscord(std::string msg) {
+    if (dcore->getState() == ON)
+        dcore->toDiscord(msg);
+    else
+        ShowWarning("Discord is not in an ON State!");
 }
 
 /*
@@ -94,7 +97,7 @@ void discord_init() {
     for (auto it = data.at("channels").begin(); it != data.at("channels").end(); ++it)
     {
         
-        channel_mapping->push_back(std::make_pair<std::string, std::string> (((json) (it.key())).dump(), ((json) (it.value())).dump()));
+        channel_mapping->push_back(std::make_pair<std::string, std::string> (((json) (it.key())), ((json) (it.value()))));
     }
     
     if(channel_mapping->empty()) {

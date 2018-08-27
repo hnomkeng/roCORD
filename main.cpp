@@ -16,7 +16,8 @@ int main(int argc, const char * argv[]) {
     while(true) {
         discord_handle();
         std::cout << "This simulates rAthena SRC! Round: " << ++i << std::endl;
-        std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        discord_toDiscord("Test message!");
     }
     return 0;
 }

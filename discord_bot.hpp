@@ -13,7 +13,7 @@
 #include <stdio.h>
 #include <iostream>
 
-void discord_toDiscord();
+void discord_toDiscord(std::string msg);
 void discord_handle();
 void discord_init();
 

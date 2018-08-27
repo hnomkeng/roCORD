@@ -29,7 +29,8 @@ public:
     ~discord_websocket();
     std::function<void(discord_core*)> getNextEvent();
     void run();
-    void sendIdentify(std::string token, std::string display_name, std::string presence);
+    void sendIdentify(std::string *token, std::string *presence);
+    void startHeartbeat(int interval);
     
 private:
     void onMessage(websocketpp::client<websocketpp::config::asio_tls_client>* client, websocketpp::connection_hdl hdl, websocketpp::config::asio_tls_client::message_type::ptr msg);
@@ -37,7 +38,7 @@ private:
     std::string token;
     websocketpp::client<websocketpp::config::asio_tls_client> client;
     std::queue<std::function<void(discord_core*)>> eventQueue;
-    websocketpp::connection_hdl hdl;
+    websocketpp::client<websocketpp::config::asio_tls_client>::connection_ptr connection;
 };
 
 #endif /* discord_websocket_hpp */

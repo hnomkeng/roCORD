@@ -7,7 +7,6 @@
 //
 
 #include <mutex>
-
 #include "discord_websocket.hpp"
 #include "discord_core.hpp"
 
@@ -18,8 +17,8 @@ discord_websocket::discord_websocket(std::string token) {
 template <typename Verifier> class verbose_verification
 {
 public:
-    verbose_verification(Verifier verifier, bool debug): verifier_(verifier)
-    { this->debug = debug;}
+    verbose_verification(Verifier verifier): verifier_(verifier)
+    {}
     
     bool operator()(bool preverified, boost::asio::ssl::verify_context& ctx)
     {
@@ -27,19 +26,16 @@ public:
         X509* cert = X509_STORE_CTX_get_current_cert(ctx.native_handle());
         X509_NAME_oneline(X509_get_subject_name(cert), subject_name, 256);
         bool verified = verifier_(preverified, ctx);
-        if (debug)
-            std::cout << "Verifying: " << subject_name << "\n" << "Verified: " << verified << std::endl;
-        return verified;
+        std::cout << "Verifying: " << subject_name << "\n" << "Verified: " << verified << std::endl;
+        return verified; // TODO handle result
     }
 private:
-    bool debug;
     Verifier verifier_;
 };
 
 template <typename Verifier> verbose_verification<Verifier> make_verbose_verification(Verifier verifier)
 {
-    bool debug = false; // TODO make it dynamic
-    return verbose_verification<Verifier>(verifier, debug);
+    return verbose_verification<Verifier>(verifier);
 }
 
 static websocketpp::lib::shared_ptr<boost::asio::ssl::context> on_tls_init(websocketpp::connection_hdl)
@@ -62,6 +58,7 @@ void discord_websocket::onMessage(websocketpp::client<websocketpp::config::asio_
 {
     json s, t, d;
     int op = -1;
+    int heartbeat_interval = -1;
     std::function<void(discord_core*)> event_ptr;
     websocketpp::lib::error_code errorCode;
 
@@ -77,23 +74,27 @@ void discord_websocket::onMessage(websocketpp::client<websocketpp::config::asio_
         case 0:
             t = payload.at("t");
             if (t == "READY") {
-                event_ptr = std::bind(&discord_core::handleReady, std::placeholders::_1);
-                // TODO
+                std::string guild = payload.at("d").at("guilds")[0].at("id");
+                event_ptr = std::bind(&discord_core::handleReady, std::placeholders::_1, guild);
             }
             else if (t == "GUILD_CREATE") {
                 // TODO
+                event_ptr = std::bind(&discord_core::handleGuildCreate, std::placeholders::_1);
             }
             else if (t == "MESSAGE_CREATE") {
                 d = payload.at("d");
-                std::string author = d.at("author").at("username").dump();
-                std::string content = d.at("content").dump();
-                
+                std::cout << d.dump() << std::endl;
+                std::string author = d.at("author").at("username");
+                std::string content = d.at("content");
+                std::string channel_id = d.at("channel_id");
+                event_ptr = std::bind(&discord_core::handleMessageCreate, std::placeholders::_1, author, content, channel_id);
             }
             else
                 std::cout << "Unhandled t value: " << t << std::endl;
             break;
         case 10:
-            event_ptr = std::bind(&discord_core::handleHello, std::placeholders::_1);
+            heartbeat_interval = payload.at("d").at("heartbeat_interval");
+            event_ptr = std::bind(&discord_core::handleHello, std::placeholders::_1, heartbeat_interval);
             break;
         case 11:
             std::cout << "Heartbeat ACK: " << std::string(payload.dump()) << std::endl;
@@ -129,24 +130,23 @@ void discord_websocket::run() {
     client.set_message_handler(websocketpp::lib::bind(&discord_websocket::onMessage, this, &client, websocketpp::lib::placeholders::_1, websocketpp::lib::placeholders::_2));
     
     websocketpp::lib::error_code errorCode;
-    websocketpp::client<websocketpp::config::asio_tls_client>::connection_ptr connection = client.get_connection("wss://gateway.discord.gg/?v=6&encoding=json", errorCode);
+    connection = client.get_connection("wss://gateway.discord.gg/?v=6&encoding=json", errorCode); // TODO fix hardcode
     if (errorCode)
     {
         std::cout << "Could not create an connection because " << errorCode.message() << std::endl;
     }
-    this->hdl = connection->get_handle();
     
     client.connect(connection);
     client.run();
 }
 
-void discord_websocket::sendIdentify(std::string token, std::string display_name, std::string presence) {
+void discord_websocket::sendIdentify(std::string *token, std::string *presence) {
     websocketpp::lib::error_code errorCode;
     json identify =
     {
         { "op", 2 },
         { "d",{
-            { "token", "NDY4NTM2MTUyNjE4Njk2NzA4.DmDBFw.4rs4EbJ_p0Klxz7lqnzzy8qwLYQ" },
+            { "token", *token },
             { "properties",{
 #ifdef __linux__
                 { "$os", "linux" },
@@ -165,7 +165,7 @@ void discord_websocket::sendIdentify(std::string token, std::string display_name
             { "shard",{ 0, 1 } },
             { "presence",{
                 { "game",{
-                    { "name", presence },
+                    { "name", *presence },
                     { "type", 0 },
                 } },
                 { "status", "dnd" },
@@ -174,9 +174,23 @@ void discord_websocket::sendIdentify(std::string token, std::string display_name
             } },
         } }
     };
-    client.send(this->hdl, identify.dump(), websocketpp::frame::opcode::text, errorCode);
+    client.send(this->connection->get_handle(), identify.dump(), websocketpp::frame::opcode::text, errorCode);
     if (errorCode) {
         std::cerr << errorCode.message() << std::endl;
+    }
+}
+
+void discord_websocket::startHeartbeat(int interval) {
+    websocketpp::lib::error_code errorCode;
+    while (true) {
+        std::this_thread::sleep_for(std::chrono::milliseconds{ interval });
+        json heartb =
+        {
+            { "op", 1 },
+            { "d", this->sequence_number}
+        };
+        this->client.send(this->connection->get_handle(), heartb.dump(), websocketpp::frame::opcode::text, errorCode);
+        if (errorCode) { std::cerr << "Heartbeat failed because " << errorCode.message() << std::endl; }
     }
 }
 
