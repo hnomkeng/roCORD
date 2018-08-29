@@ -1,0 +1,40 @@
+cmake_minimum_required(VERSION 3.9)
+project(roCORD)
+
+set(CMAKE_CXX_STANDARD 14)  # enable C++14 standard
+set (CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++1y -D TESTING -Wall -pthread") #
+
+include_directories(/home/travis/build/Normynator/roCORDTesting/cget/cget/pkg/nlohmann__json/install/include/ /home/travis/build/Normynator/roCORDTesting/websocketpp/ ) #/usr/local/Cellar/boost@1.60/1.60.0/include)
+
+set (Boost_USE_STATIC_LIBS OFF)
+set (Boost_USE_MULTITHREAD ON)
+
+find_package(CURL)
+IF (CURL_FOUND)
+	message(STATUS "CURL found!")
+	include_directories(${CURL_INCLUDE_DIRS})
+ELSE ()
+	message(FATAL_ERROR "CURL not found!")
+endif()
+
+find_package (OpenSSL)
+IF (OPENSSL_FOUND)
+	message(STATUS "OpenSSL found!")
+	include_directories(${OPENSSL_INCLUDE_DIR})
+ELSE ()
+	message(FATAL_ERROR "OpenSSL not found!")
+endif()
+
+find_package (Boost 1.54.0 COMPONENTS REQUIRED chrono filesystem)
+IF (Boost_FOUND)
+    message(STATUS "Boost found!")
+    include_directories(${Boost_INCLUDE_DIR})
+ELSE(
+    message(FATAL_ERROR "Boost not found!")
+	)
+endif()
+
+add_executable (roCORD main.cpp discord_bot.cpp discord_core.cpp discord_error.cpp discord_http.cpp discord_websocket.cpp clif_testing.cpp showmsg_testing.cpp)
+target_link_libraries (roCORD ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} ${CURL_LIBRARIES})
+
+

@@ -49,11 +49,9 @@ private:
     State state;
     int config_version;
     int debug;
-    int heartbeat_interval;
     std::shared_ptr<std::vector<std::pair<std::string, std::string>>> channel_mapping;
     std::shared_ptr<discord_websocket> dwss;
     std::thread dwss_thr;
-    std::thread heartbeat_thr;
     std::unique_ptr<discord_http> dhttps;
     
 };

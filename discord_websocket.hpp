@@ -27,15 +27,20 @@ public:
     discord_websocket() {};
     discord_websocket(std::string token);
     ~discord_websocket();
+    void final();
     std::function<void(discord_core*)> getNextEvent();
     void run();
     void sendIdentify(std::string *token, std::string *presence);
     void startHeartbeat(int interval);
+    bool heartbeat_active;
     
 private:
     void onMessage(websocketpp::client<websocketpp::config::asio_tls_client>* client, websocketpp::connection_hdl hdl, websocketpp::config::asio_tls_client::message_type::ptr msg);
     int sequence_number;
     std::string token;
+    void do_heartbeat();
+    int interval;
+    std::thread heartbeat_thr;
     websocketpp::client<websocketpp::config::asio_tls_client> client;
     std::queue<std::function<void(discord_core*)>> eventQueue;
     websocketpp::client<websocketpp::config::asio_tls_client>::connection_ptr connection;

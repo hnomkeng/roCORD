@@ -53,56 +53,68 @@ void discord_toDiscord(std::string msg) {
  *      }
  *}
  */
-void discord_init() {
-    std::ifstream ifs("/Users/normanziebal/roCORD/roCORD/roCORD/config.json"); // TODO: fix hardcoded path!
-    json data = json::parse(ifs);
+int discord_init() {
+    std::ifstream ifs("../config.json"); // TODO: fix hardcoded path!
+    json data;
     int version, debug;
+    std::shared_ptr<std::vector<std::pair<std::string, std::string>>> channel_mapping;
     std::string display_name, token, presence;
-    
-    if(data.find("version") != data.end())
-        version = data.at("version");
-    else {
-        ShowError("Version is not defined! Aborting!");
-        return;
+    if (ifs.fail()) {
+        ShowError("Failed to open config.json!");
+        return -1;
     }
-    
-    if(data.find("token") != data.end())
-        token = data.at("token");
-    else {
-        ShowError("Token is not defined! Aborting!");
-        return;
-    }
-    
-    if(data.find("display_name") != data.end())
-        display_name = data.at("display_name");
-    else {
-        ShowWarning("No display_name defined using alternative!");
-        display_name = "roCORD";
-    }
-    
-    if(data.find("presence") != data.end())
-        presence = data.at("presence");
-    else {
-        ShowWarning("No presence defined using alternative!");
-        presence = "by Normynator";
-    }
-    
-    if(data.find("debug") != data.end())
-        debug = data.at("debug");
-    else {
-        debug = 0;
-    }
-    
-    std::shared_ptr<std::vector<std::pair<std::string, std::string>>> channel_mapping = std::make_shared<std::vector<std::pair<std::string, std::string>>>();
-    for (auto it = data.at("channels").begin(); it != data.at("channels").end(); ++it)
+
+    try {
+        data = json::parse(ifs);
+        if (data.find("version") != data.end())
+            version = data.at("version");
+        else {
+            ShowError("Version is not defined! Aborting!");
+            return -1;
+        }
+
+        if (data.find("token") != data.end())
+            token = data.at("token");
+        else {
+            ShowError("Token is not defined! Aborting!");
+            return -1;
+        }
+
+        if (data.find("display_name") != data.end())
+            display_name = data.at("display_name");
+        else {
+            ShowWarning("No display_name defined using alternative!");
+            display_name = "roCORD";
+        }
+
+        if (data.find("presence") != data.end())
+            presence = data.at("presence");
+        else {
+            ShowWarning("No presence defined using alternative!");
+            presence = "by Normynator";
+        }
+
+        if (data.find("debug") != data.end())
+            debug = data.at("debug");
+        else {
+            debug = 0;
+        }
+
+        channel_mapping = std::make_shared<std::vector<std::pair<std::string, std::string>>>();
+        for (auto it = data.at("channels").begin(); it != data.at("channels").end(); ++it) {
+
+            channel_mapping->push_back(
+                    std::make_pair<std::string, std::string>(((json) (it.key())), ((json) (it.value()))));
+        }
+
+        if (channel_mapping->empty()) {
+            ShowError("No channel mapping found! Aborting!");
+            return -1;
+        }
+    } catch (json::parse_error &e)
     {
-        
-        channel_mapping->push_back(std::make_pair<std::string, std::string> (((json) (it.key())), ((json) (it.value()))));
-    }
-    
-    if(channel_mapping->empty()) {
-        ShowError("No channel mapping found! Aborting!");
-        return;
+        std::cerr << e.what() << std::endl;
+        return -1;
     }
     
     /* TODO:
@@ -111,4 +123,9 @@ void discord_init() {
      *  Maybe validate somewhere else, since we dont know the Discord Channels yet!
      */
     dcore = std::make_unique<discord_core>(display_name, token, presence, debug, version, channel_mapping);
+    return 0;
+}
+
+void discord_free() {
+    dcore.reset();
 }

@@ -11,13 +11,17 @@
 #include "discord_bot.hpp"
 
 int main(int argc, const char * argv[]) {
-    discord_init();
+    int err = discord_init();
+    if (err == -1)
+        return 0;
     int i = 0;
-    while(true) {
+    while(i < 10) {
         discord_handle();
         std::cout << "This simulates rAthena SRC! Round: " << ++i << std::endl;
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-        discord_toDiscord("Test message!");
+        //discord_toDiscord("Test message!");
     }
+
+    discord_free();
     return 0;
 }

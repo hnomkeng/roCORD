@@ -15,6 +15,7 @@
 
 void discord_toDiscord(std::string msg);
 void discord_handle();
-void discord_init();
+int discord_init();
+void discord_free();
 
 #endif /* discord_bot_hpp */

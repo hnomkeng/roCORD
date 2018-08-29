@@ -71,7 +71,7 @@ void discord_http::request(struct curl_slist *header, std::string *request_type,
         curl_easy_setopt(curl, CURLOPT_URL, api_url.c_str()); //TODO fixme
         
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, content->c_str());
-        curl_easy_setopt(curl, CURLOPT_CAINFO, "/Users/normanziebal/roCORD.v2/cacert.pem");
+        curl_easy_setopt(curl, CURLOPT_CAINFO, "../cacert.pem");
         
 #ifdef SKIP_PEER_VERIFICATION
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);

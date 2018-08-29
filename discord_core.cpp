@@ -10,10 +10,13 @@
 #include <iostream>
 #include <thread>
 
+#include "discord_error.hpp"
+
 #ifdef TESTING
     #include "showmsg_testing.hpp"
 #else
     #include "../common/showmsg.hpp"
+    #include "../map/channel.hpp"
 #endif
 
 
@@ -27,7 +30,6 @@ discord_core::discord_core(std::string display_name, std::string token, std::str
     this->debug = debug;
     this->channel_mapping = channel_mapping;
     this->guild_id = "";
-    this->heartbeat_interval = -1;
     this->state = OFF;
     this->dwss = std::make_shared<discord_websocket>(this->token);
     this->dwss_thr = std::thread(&discord_websocket::run, dwss);
@@ -37,14 +39,18 @@ discord_core::discord_core(std::string display_name, std::string token, std::str
 }
 
 discord_core::~discord_core() {
-    // TODO
+    this->dwss->final();
+    this->dwss_thr.join();
+    std::cout << "Pointer to dwss left: " << dwss.use_count() << std::endl;
+    std::cout << "Core is shutting down now!" << std::endl;
 }
 
 /*
  * Public
  * Sends a message from rAthena SRC to Discord
  */
-int discord_core::toDiscord(std::string msg) {
+int discord_core::toDiscord(std::string msg) { // sd missing
+    // formating
     this->dhttps->send(msg);
     return 0;
 }
@@ -117,7 +123,7 @@ void discord_core::handleMessageCreate(std::string author, std::string content, 
     std::string channel = "";
     for(auto it = channel_mapping->begin(); it != channel_mapping->end(); it++) {
         if (it->second == d_channel) {
-            channel = d_channel;
+            channel = it->first;
             break;
         }
     }
@@ -126,7 +132,22 @@ void discord_core::handleMessageCreate(std::string author, std::string content, 
         ShowError("Discord channel has no mapping!");
         return;
     }
-    std::cout << author << ": " << content << std::endl;
+    
+    std::string msg = "[";
+    msg.append(channel);
+    msg.append("] <");
+    msg.append(author);
+    msg.append(">: ");
+    msg.append(content);
+
+#ifdef TESTING
+    ShowInfo(msg.c_str());
+#else
+    // DBMap* channel_get_db(void){ return channel_db; } // this should not be done here. Only update if this list changes
+    // (struct Channel*) strdb_get(channel_db, chname + 1);
+    // or
+    channel_name2channel(...);
+#endif
 }
 
 /*
@@ -144,8 +165,8 @@ void discord_core::handleGuildCreate() {
  */
 void discord_core::handleHello(int heartbeat_interval) {
     ShowInfo("Discord: Hello Event!");
-    this->heartbeat_interval = heartbeat_interval / 2; // TODO configable
-    this->heartbeat_thr = std::thread(&discord_websocket::startHeartbeat, dwss, this->heartbeat_interval);
+    this->dwss->heartbeat_active = true;
+    this->dwss->startHeartbeat(heartbeat_interval / 2); // TODO configable)
     this->dwss->sendIdentify(&token, &presence);
     this->state = CONNECTING;
 }

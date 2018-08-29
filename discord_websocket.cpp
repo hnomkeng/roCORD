@@ -9,6 +9,7 @@
 #include <mutex>
 #include "discord_websocket.hpp"
 #include "discord_core.hpp"
+#include "discord_error.hpp"
 
 discord_websocket::discord_websocket(std::string token) {
     this->token = token;
@@ -47,7 +48,7 @@ static websocketpp::lib::shared_ptr<boost::asio::ssl::context> on_tls_init(webso
                      boost::asio::ssl::context::no_sslv3 |
                      boost::asio::ssl::context::single_dh_use);
     
-    ctx->load_verify_file("/Users/normanziebal/roCORD.v2/cacert.pem"); // TODO catch exception
+    ctx->load_verify_file("../cacert.pem"); // TODO catch exception
     ctx->set_verify_mode(boost::asio::ssl::verify_peer);
     ctx->set_verify_callback(make_verbose_verification(boost::asio::ssl::rfc2818_verification("gateway.discord.gg")));
     
@@ -150,7 +151,7 @@ void discord_websocket::sendIdentify(std::string *token, std::string *presence) 
             { "properties",{
 #ifdef __linux__
                 { "$os", "linux" },
-#elseif _WIN32
+#elif _WIN32
                 { "$os", "windows" },
 #else
                 { "$os", "osx" },
@@ -181,21 +182,33 @@ void discord_websocket::sendIdentify(std::string *token, std::string *presence) 
 }
 
 void discord_websocket::startHeartbeat(int interval) {
+    this->interval = interval;
+    this->heartbeat_thr = std::thread(&discord_websocket::do_heartbeat, this);
+}
+
+void discord_websocket::do_heartbeat() {
     websocketpp::lib::error_code errorCode;
-    while (true) {
-        std::this_thread::sleep_for(std::chrono::milliseconds{ interval });
+    while (this->heartbeat_active) {
+        std::this_thread::sleep_for(std::chrono::milliseconds{ this->interval });
         json heartb =
-        {
-            { "op", 1 },
-            { "d", this->sequence_number}
-        };
+                {
+                        { "op", 1 },
+                        { "d", this->sequence_number}
+                };
         this->client.send(this->connection->get_handle(), heartb.dump(), websocketpp::frame::opcode::text, errorCode);
         if (errorCode) { std::cerr << "Heartbeat failed because " << errorCode.message() << std::endl; }
     }
+    std::cout << "Stopping heartbeat!" << std::endl;
+}
+
+void discord_websocket::final() {
+    this->heartbeat_active = false;
+    this->heartbeat_thr.join();
+    this->client.close(this->connection->get_handle(), websocketpp::close::status::normal, "Connection closed by client.");
 }
 
 discord_websocket::~discord_websocket() {
-    
+    std::cout << "Websocket is shutting down!" << std::endl;
 }
 
 
