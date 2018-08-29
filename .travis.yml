@@ -1,0 +1,33 @@
+language: cpp
+compiler: gcc
+matrix:
+  include:
+   # works on Precise and Trusty
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-7
+      env:
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+
+before_install:
+    - eval "${MATRIX_EVAL}"
+
+install:
+    - sudo apt-get install libcurl4-openssl-dev
+    - sudo apt-get install libboost-all-dev
+    - sudo apt-get install libffi-dev libssl-dev 
+    - pip install --user cget
+    - cget install nlohmann/json
+    - git clone https://github.com/zaphoyd/websocketpp.git
+
+script:
+- mv CMakeLists_travis.txt CMakeLists.txt
+- mkdir build
+- cd build
+- cmake ../.
+- make
+- ./roCORD
