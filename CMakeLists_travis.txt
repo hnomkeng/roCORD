@@ -4,7 +4,7 @@ project(roCORD)
 set(CMAKE_CXX_STANDARD 14)  # enable C++14 standard
 set (CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++1y -D TESTING -Wall -pthread") #
 
-include_directories(/home/travis/build/Normynator/roCORDTesting/cget/cget/pkg/nlohmann__json/install/include/ /home/travis/build/Normynator/roCORDTesting/websocketpp/ ) #/usr/local/Cellar/boost@1.60/1.60.0/include)
+include_directories(/home/travis/build/Normynator/roCORD/cget/cget/pkg/nlohmann__json/install/include/ /home/travis/build/Normynator/roCORD/websocketpp/ ) #/usr/local/Cellar/boost@1.60/1.60.0/include)
 
 set (Boost_USE_STATIC_LIBS OFF)
 set (Boost_USE_MULTITHREAD ON)
