@@ -15,7 +15,7 @@ int main(int argc, const char * argv[]) {
     if (err == -1)
         return 0;
     int i = 0;
-    while(i < 10) {
+    while(i < 100) {
         discord_handle();
         std::cout << "This simulates rAthena SRC! Round: " << ++i << std::endl;
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));

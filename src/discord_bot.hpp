@@ -12,10 +12,12 @@
 #include <string>
 #include <stdio.h>
 #include <iostream>
+#include "../../common/timer.hpp"
 
-void discord_toDiscord(std::string msg);
-void discord_handle();
+void discord_toDiscord(const char* msg, const char* channel, const char* name);
+TIMER_FUNC(discord_handle);
 int discord_init();
 void discord_free();
+int discord_script(const char* msg, const char* channel);
 
 #endif /* discord_bot_hpp */

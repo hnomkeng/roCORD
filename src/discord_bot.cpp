@@ -15,7 +15,8 @@
 #ifdef TESTING
     #include "showmsg_testing.hpp"
 #else
-    #include "../common/showmsg.hpp"
+    #include "../../common/showmsg.hpp"
+	#include "../../common/timer.hpp"
 #endif
 
 using namespace nlohmann;
@@ -25,18 +26,33 @@ std::unique_ptr<discord_core> dcore;
 /*
  * Entry point to hand control to bot.
  */
-void discord_handle() {
+TIMER_FUNC(discord_handle) {
     dcore->handleEvents();
+	add_timer(gettick()+100, discord_handle, 0, 0);
+	return 0;
 }
 
 /*
  * Entry point to send a message to discord.
  */
-void discord_toDiscord(std::string msg) {
-    if (dcore->getState() == ON)
-        dcore->toDiscord(msg);
-    else
+void discord_toDiscord(const char* msg, const char* channel, const char* name) {
+    if (dcore->getState() == ON) {
+		std::string msg_s = msg;
+		std::string channel_s = channel;
+		std::string name_s = name;
+        dcore->toDiscord(msg_s, channel_s, &name_s);
+	} else
         ShowWarning("Discord is not in an ON State!");
+}
+
+int discord_script(const char* msg, const char* channel) {
+	if (dcore->getState() == OFF) {
+		ShowWarning("Discord is not in ON State!");
+		return -1;
+	}
+	std::string msg_s = msg;
+	std::string channel_s = channel;
+    return dcore->toDiscord(msg_s, channel_s, nullptr);
 }
 
 /*
@@ -54,13 +70,18 @@ void discord_toDiscord(std::string msg) {
  *}
  */
 int discord_init() {
+	ShowStatus("Loading roCORD by norm\n");
+#ifdef TESTING
     std::ifstream ifs("../config.json"); // TODO: fix hardcoded path!
+#else
+	std::ifstream ifs("conf/discord/config.json");
+#endif
     json data;
     int version, debug;
     std::shared_ptr<std::vector<std::pair<std::string, std::string>>> channel_mapping;
     std::string display_name, token, presence;
     if (ifs.fail()) {
-        ShowError("Failed to open config.json!");
+        ShowError("[roCORD] Failed to open config.json!\n");
         return -1;
     }
 
@@ -69,28 +90,28 @@ int discord_init() {
         if (data.find("version") != data.end())
             version = data.at("version");
         else {
-            ShowError("Version is not defined! Aborting!");
+            ShowError("[roCORD] Version is not defined! Aborting!\n");
             return -1;
         }
 
         if (data.find("token") != data.end())
             token = data.at("token");
         else {
-            ShowError("Token is not defined! Aborting!");
+            ShowError("[roCORD] Token is not defined! Aborting!\n");
             return -1;
         }
 
         if (data.find("display_name") != data.end())
             display_name = data.at("display_name");
         else {
-            ShowWarning("No display_name defined using alternative!");
+            ShowInfo("[roCORD] No display_name defined using alternative!\n");
             display_name = "roCORD";
         }
 
         if (data.find("presence") != data.end())
             presence = data.at("presence");
         else {
-            ShowWarning("No presence defined using alternative!");
+            ShowInfo("[roCORD] No presence defined using alternative!\n");
             presence = "by Normynator";
         }
 
@@ -100,7 +121,7 @@ int discord_init() {
             debug = 0;
         }
 
-        channel_mapping = std::make_shared<std::vector<std::pair<std::string, std::string>>>();
+        channel_mapping = std::make_shared<std::vector<std::pair<std::string, std::string>>>(); // TODO leak?
         for (auto it = data.at("channels").begin(); it != data.at("channels").end(); ++it) {
 
             channel_mapping->push_back(
@@ -108,7 +129,7 @@ int discord_init() {
         }
 
         if (channel_mapping->empty()) {
-            ShowError("No channel mapping found! Aborting!");
+            ShowError("[roCORD] No channel mapping found! Aborting!\n");
             return -1;
         }
     } catch (json::parse_error &e)
@@ -122,10 +143,15 @@ int discord_init() {
      *  Check if the given channels do exist.
      *  Maybe validate somewhere else, since we dont know the Discord Channels yet!
      */
-    dcore = std::make_unique<discord_core>(display_name, token, presence, debug, version, channel_mapping);
-    return 0;
+    dcore = std::unique_ptr<discord_core>(new discord_core(display_name, token, presence, debug, version, channel_mapping));
+	add_timer_func_list(discord_handle, "discord_handle");
+	add_timer_interval(gettick()+100, discord_handle, 0, 0, 1000); //start in 1s each 1sec
+	return 0;
 }
 
-void discord_free() {
-    dcore.reset();
-}
+/* 
+ * currently not needed because of unique ptr destruct!
+	void discord_free() {
+		dcore.reset();
+	}
+ */

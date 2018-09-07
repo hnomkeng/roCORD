@@ -26,11 +26,11 @@ class discord_websocket {
 public:
     discord_websocket() {};
     discord_websocket(std::string token);
-    ~discord_websocket();
+    virtual ~discord_websocket();
     void final();
     std::function<void(discord_core*)> getNextEvent();
     void run();
-    void sendIdentify(std::string *token, std::string *presence);
+    void sendIdentify(const std::string& token, const std::string& presence);
     void startHeartbeat(int interval);
     bool heartbeat_active;
     

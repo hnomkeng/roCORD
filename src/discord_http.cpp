@@ -8,6 +8,7 @@
 
 #include "discord_http.hpp"
 #include <nlohmann/json.hpp>
+#include <future>
 
 using namespace nlohmann;
 
@@ -20,27 +21,30 @@ discord_http::discord_http(std::string* token) {
 
 discord_http::~discord_http() {
     curl_global_cleanup();
+    std::cout << "Http is shutting down!" << std::endl;
 }
 
-void discord_http::send(std::string payload) {
-    struct curl_slist *header = NULL;
+void discord_http::send(const std::string& payload, const std::string& channel_id) {
+    struct curl_slist *header = nullptr;
     std::string url, content;
     std::string type = "POST";
 
-    url = "channels/280871866669989888/messages"; //TODO fix channel!
+    url = "channels/";
+	url.append(channel_id);
+	url.append("/messages");
     
     content = "content=";
     content.append(payload);
     
-    this->request(header, &type, &url, &content);
+	auto handle = std::async(std::launch::async, &discord_http::request, this, header, type, url, content);
 }
 
-void discord_http::setDisplayName(std::string display_name, std::string guild_id) {
-    struct curl_slist *header = NULL;
+void discord_http::setDisplayName(const std::string& display_name, const std::string& guild_id) {
+    struct curl_slist *header = nullptr;
     std::string url, content;
     std::string type = "PATCH";
     
-    if(guild_id == "" || display_name == "")
+    if(guild_id.empty() || display_name.empty())
         return;
     
     header = curl_slist_append(header, "Content-Type:application/json");
@@ -51,11 +55,11 @@ void discord_http::setDisplayName(std::string display_name, std::string guild_id
         { "username", display_name }
     }).dump();
     
-    this->request(header, &type, &url, &content);
+    auto handle = std::async(std::launch::async, &discord_http::request, this, header, type, url, content);
 
 }
 
-void discord_http::request(struct curl_slist *header, std::string *request_type, std::string *url, std::string *content) {
+void discord_http::request(struct curl_slist *header, const std::string& request_type, const std::string& url, const std::string& content) {
     CURL *curl = curl_easy_init();
     if (curl) {
         CURLcode res;
@@ -65,13 +69,17 @@ void discord_http::request(struct curl_slist *header, std::string *request_type,
         header = curl_slist_append(header, auth);
         header = curl_slist_append(header, "User-Agent:roCORD (https://github.com/Normynator/Ragnarok, v1)");
         res = curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header);
-        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, request_type->c_str());
+        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, request_type.c_str());
         std::string api_url = "https://discordapp.com/api/v6/";
-        api_url.append(*url);
+        api_url.append(url);
         curl_easy_setopt(curl, CURLOPT_URL, api_url.c_str()); //TODO fixme
         
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, content->c_str());
-        curl_easy_setopt(curl, CURLOPT_CAINFO, "../cacert.pem");
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, content.c_str());
+#ifdef TESTING
+		curl_easy_setopt(curl, CURLOPT_CAINFO, "../cacert.pem");
+#else
+        curl_easy_setopt(curl, CURLOPT_CAINFO, "conf/discord/cacert.pem");
+#endif
         
 #ifdef SKIP_PEER_VERIFICATION
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);

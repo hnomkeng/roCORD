@@ -1,0 +1,9 @@
+23a24,25
+> #include "discord/discord_bot.hpp"
+> 
+456c458
+< 		safesnprintf(output, CHAT_SIZE_MAX, "%s %s : %s", channel->alias, sd->status.name, msg);
+---
+> 		safesnprintf(output, CHAT_SIZE_MAX, "%s %s : %s", channel->alias, sd->status.name, msg);	
+457a460
+> 		discord_toDiscord(msg, channel->name, sd->status.name);

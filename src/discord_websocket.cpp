@@ -47,8 +47,11 @@ static websocketpp::lib::shared_ptr<boost::asio::ssl::context> on_tls_init(webso
                      boost::asio::ssl::context::no_sslv2 |
                      boost::asio::ssl::context::no_sslv3 |
                      boost::asio::ssl::context::single_dh_use);
-    
+#ifdef TESTING    
     ctx->load_verify_file("../cacert.pem"); // TODO catch exception
+#else
+	ctx->load_verify_file("conf/discord/cacert.pem");
+#endif
     ctx->set_verify_mode(boost::asio::ssl::verify_peer);
     ctx->set_verify_callback(make_verbose_verification(boost::asio::ssl::rfc2818_verification("gateway.discord.gg")));
     
@@ -75,6 +78,7 @@ void discord_websocket::onMessage(websocketpp::client<websocketpp::config::asio_
         case 0:
             t = payload.at("t");
             if (t == "READY") {
+                std::cout << payload.at("d").dump() << std::endl;
                 std::string guild = payload.at("d").at("guilds")[0].at("id");
                 event_ptr = std::bind(&discord_core::handleReady, std::placeholders::_1, guild);
             }
@@ -86,9 +90,12 @@ void discord_websocket::onMessage(websocketpp::client<websocketpp::config::asio_
                 d = payload.at("d");
                 std::cout << d.dump() << std::endl;
                 std::string author = d.at("author").at("username");
+                std::string nick;
+                if(!d.at("member").at("nick").is_null())
+                    nick = d.at("member").at("nick");
                 std::string content = d.at("content");
                 std::string channel_id = d.at("channel_id");
-                event_ptr = std::bind(&discord_core::handleMessageCreate, std::placeholders::_1, author, content, channel_id);
+                event_ptr = std::bind(&discord_core::handleMessageCreate, std::placeholders::_1, author, nick, content, channel_id);
             }
             else
                 std::cout << "Unhandled t value: " << t << std::endl;
@@ -141,13 +148,13 @@ void discord_websocket::run() {
     client.run();
 }
 
-void discord_websocket::sendIdentify(std::string *token, std::string *presence) {
+void discord_websocket::sendIdentify(const std::string& token, const std::string& presence) {
     websocketpp::lib::error_code errorCode;
     json identify =
     {
         { "op", 2 },
         { "d",{
-            { "token", *token },
+            { "token", token },
             { "properties",{
 #ifdef __linux__
                 { "$os", "linux" },
@@ -166,7 +173,7 @@ void discord_websocket::sendIdentify(std::string *token, std::string *presence) 
             { "shard",{ 0, 1 } },
             { "presence",{
                 { "game",{
-                    { "name", *presence },
+                    { "name", presence },
                     { "type", 0 },
                 } },
                 { "status", "dnd" },
