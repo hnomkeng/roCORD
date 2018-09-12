@@ -169,12 +169,16 @@ void discord_core::handleMessageCreate(const std::string& author, const std::str
     }
 
     //discord_core::convert_utf8(content);
+#ifndef TESTING
 	Channel* r_channel = channel_name2channel((char*)channel.c_str(), NULL, 0);
 	if (!r_channel){
 		ShowError("[roCORD] Channel was not found!");
 		return;
 	}
     std::string msg = r_channel->alias;
+#else
+	std::string msg = channel;
+#endif
     msg.append("<");
     if (!nick.empty() && check_ISO8859_1(nick))
         msg.append(nick);

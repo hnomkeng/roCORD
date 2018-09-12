@@ -23,6 +23,11 @@ using namespace nlohmann;
 
 std::unique_ptr<discord_core> dcore;
 
+#ifdef TESTING
+void discord_handle() {
+	dcore->handleEvents();
+}
+#else
 /*
  * Entry point to hand control to bot.
  */
@@ -31,6 +36,7 @@ TIMER_FUNC(discord_handle) {
 	add_timer(gettick()+100, discord_handle, 0, 0);
 	return 0;
 }
+#endif
 
 /*
  * Entry point to send a message to discord.
@@ -144,8 +150,10 @@ int discord_init() {
      *  Maybe validate somewhere else, since we dont know the Discord Channels yet!
      */
     dcore = std::unique_ptr<discord_core>(new discord_core(display_name, token, presence, debug, version, channel_mapping));
+#ifndef TESTING
 	add_timer_func_list(discord_handle, "discord_handle");
 	add_timer_interval(gettick()+100, discord_handle, 0, 0, 1000); //start in 1s each 1sec
+#endif
 	return 0;
 }
 

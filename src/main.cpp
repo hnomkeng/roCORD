@@ -22,6 +22,6 @@ int main(int argc, const char * argv[]) {
         //discord_toDiscord("Test message!");
     }
 
-    discord_free();
+    //discord_free();
     return 0;
 }
