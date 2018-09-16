@@ -37,5 +37,5 @@
 35. mkdir build
 36. cd build
 37. /usr/local/bin/cmake -G"Unix Makefiles" -DINSTALL_TO_SOURCE=ON -DJSON=/usr/local/include/nlohmann -DWEBSOCKETPP=~/websocketpp ..
-[01:36] nörm: 38. make install
+38. make install
 39. Done!
