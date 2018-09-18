@@ -10,6 +10,7 @@
 #include "discord_websocket.hpp"
 #include "discord_core.hpp"
 #include "discord_error.hpp"
+#include <boost/algorithm/string/predicate.hpp>
 
 discord_websocket::discord_websocket(std::string token) {
     this->token = token;
@@ -48,7 +49,7 @@ static websocketpp::lib::shared_ptr<boost::asio::ssl::context> on_tls_init(webso
                      boost::asio::ssl::context::no_sslv3 |
                      boost::asio::ssl::context::single_dh_use);
 #ifdef TESTING    
-    ctx->load_verify_file("../cacert.pem"); // TODO catch exception
+    ctx->load_verify_file("../config/cacert.pem"); // TODO catch exception
 #else
 	ctx->load_verify_file("conf/discord/cacert.pem");
 #endif
@@ -72,7 +73,7 @@ void discord_websocket::onMessage(websocketpp::client<websocketpp::config::asio_
     if (s.dump() != "null") {
         this->sequence_number = (int)s;
     }
-    
+   	//TODO exception catch for json parser error 
     op = (int)payload.at("op");
     switch (op) {
         case 0:
@@ -87,18 +88,22 @@ void discord_websocket::onMessage(websocketpp::client<websocketpp::config::asio_
                 event_ptr = std::bind(&discord_core::handleGuildCreate, std::placeholders::_1);
             }
             else if (t == "MESSAGE_CREATE") {
-                d = payload.at("d");
-                std::cout << d.dump() << std::endl;
-                std::string author = d.at("author").at("username");
-                std::string nick;
-                if(!d.at("member").at("nick").is_null())
-                    nick = d.at("member").at("nick");
-                std::string content = d.at("content");
-                std::string channel_id = d.at("channel_id");
-                event_ptr = std::bind(&discord_core::handleMessageCreate, std::placeholders::_1, author, nick, content, channel_id);
-            }
-            else
+				d = payload.at("d");
+				std::string content = d.at("content");
+				std::string channel_id = d.at("channel_id");
+				if (d.at("content") == "!info") {
+					event_ptr = std::bind(&discord_core::handleCmdInfo, std::placeholders::_1, channel_id);
+				} else {
+                	std::cout << d.dump() << std::endl;
+                	std::string author = d.at("author").at("username");
+                	std::string nick;
+					if((d.at("member").find("nick") != d.at("member").end()) && !d.at("member").at("nick").is_null()) 
+                   		nick = d.at("member").at("nick");
+                	event_ptr = std::bind(&discord_core::handleMessageCreate, std::placeholders::_1, author, nick, content, channel_id);
+				}
+            } else
                 std::cout << "Unhandled t value: " << t << std::endl;
+
             break;
         case 10:
             heartbeat_interval = payload.at("d").at("heartbeat_interval");

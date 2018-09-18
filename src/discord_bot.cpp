@@ -78,7 +78,7 @@ int discord_script(const char* msg, const char* channel) {
 int discord_init() {
 	ShowStatus("Loading roCORD by norm\n");
 #ifdef TESTING
-    std::ifstream ifs("../config.json"); // TODO: fix hardcoded path!
+    std::ifstream ifs("../config/config.json"); // TODO: fix hardcoded path!
 #else
 	std::ifstream ifs("conf/discord/config.json");
 #endif

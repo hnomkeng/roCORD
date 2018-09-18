@@ -37,6 +37,7 @@ public:
     
 private:
     friend class discord_websocket;
+	void handleCmdInfo(const std::string& channel_id);
     void handleReady(const std::string& guild_id);
     void handleHello(int heartbeat_interval);
     void handleGuildCreate();

@@ -219,6 +219,17 @@ void discord_core::handleHello(int heartbeat_interval) {
     this->state = CONNECTING;
 }
 
+/*
+ * Private
+ * Gives information about the bot back to discord.
+ */
+void discord_core::handleCmdInfo(const std::string& channel_id) {
+	this->dhttps.send("Bot created by norm.\nAvailable commands:\n- !info: shows this info text\n", channel_id);	
+}
+
+/*
+ * Private
+ */
 bool discord_core::check_ISO8859_1(const std::string &content) {
     try {
         boost::locale::conv::from_utf(content, "ISO-8859-1", boost::locale::conv::method_type::stop);
@@ -228,10 +239,16 @@ bool discord_core::check_ISO8859_1(const std::string &content) {
     return true;
 }
 
+/*
+ * Private
+ */
 void discord_core::convert_utf8(std::string& content) { 
   	content = boost::locale::conv::from_utf(content, "ISO-8859-1");
 }
 
+/*
+ * Private
+ */
 void discord_core::convert_latin1(std::string& content) {
 	std::string latin1 = "ISO-8859-1";
 	content = boost::locale::conv::to_utf<char>(content, "ISO-8859-1");
