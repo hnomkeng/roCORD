@@ -30,7 +30,7 @@ discord_core::discord_core(std::string display_name_, std::string token_, std::s
     this->dwss = std::make_shared<discord_websocket>(this->token);
     this->dwss_thr = std::thread(&discord_websocket::run, dwss);
     //this->dhttps = std::make_unique<discord_http>(&this->token);
-    this->dhttps = discord_http(&this->token); //TODO should be const
+    this->dhttps = std::unique_ptr<discord_http>{new discord_http(&this->token)}; //TODO should be const
     // heartbeat thread
     this->info();
 };
@@ -53,11 +53,11 @@ int discord_core::toDiscord(std::string& msg, const std::string& channel, std::s
 	  if (!name)
 		*name = ""; // if webhooks are used, this should be the bot name;
 	*/
-	std::string channel_ = "#";
-	channel_.append(channel);
+	//std::string channel_ = "#";
+	//channel_.append(channel);
 	std::string channel_id;
 	for(auto it = channel_mapping->begin(); it != channel_mapping->end(); it++) {
-		if (it->first == channel_) {
+		if (it->first == channel) {
 			channel_id = it->second;
 			break;
 		}
@@ -67,7 +67,7 @@ int discord_core::toDiscord(std::string& msg, const std::string& channel, std::s
 		ShowWarning("Discord channel has no mapping!");
 		return -1;
 	}
-#ifndef __linux__ 
+#ifdef _WIN32
 	if (name)
 		msg.erase(0,3); // TODO: what happens when executing script cmd on linux, same as osx?
 #endif
@@ -78,7 +78,7 @@ int discord_core::toDiscord(std::string& msg, const std::string& channel, std::s
 		ss << "<" << *name << "> " << msg;// << " | " << channel_id;
 	else
 		ss << msg;
-    this->dhttps.send(ss.str(), channel_id);
+    this->dhttps->send(ss.str(), channel_id);
     return 0;
 }
 
@@ -97,7 +97,7 @@ State discord_core::getState() {
 void discord_core::setDisplayName(const std::string& display_name) {
     if (this->display_name == display_name)
         return;
-    this->dhttps.setDisplayName(display_name, this->guild_id);
+    this->dhttps->setDisplayName(display_name, this->guild_id);
     this->display_name = display_name;
 }
 
@@ -137,9 +137,9 @@ void discord_core::info() {
 void discord_core::handleReady(const std::string& guild_id) {
     ShowInfo("Discord: Ready Event!");
     this->guild_id = guild_id; // TODO
-    this->dhttps.setDisplayName(this->display_name, this->guild_id); // init set of display_name
+    this->dhttps->setDisplayName(this->display_name, this->guild_id); // init set of display_name
     std::string payload = " * We launched into outer space * "; // DEBUG VALUE
-    this->dhttps.send(payload, channel_mapping->begin()->second);
+    this->dhttps->send(payload, channel_mapping->begin()->second);
     this->state = ON;
 }
 
@@ -224,7 +224,7 @@ void discord_core::handleHello(int heartbeat_interval) {
  * Gives information about the bot back to discord.
  */
 void discord_core::handleCmdInfo(const std::string& channel_id) {
-	this->dhttps.send("Bot created by norm.\nAvailable commands:\n- !info: shows this info text\n", channel_id);	
+	this->dhttps->send("Bot created by norm.\nAvailable commands:\n- !info: shows this info text\n", channel_id);	
 }
 
 /*
