@@ -1,33 +1,49 @@
 language: cpp
 compiler: gcc
+cache: ccache
 matrix:
   include:
-   # works on Precise and Trusty
-    - os: linux
-      addons:
+  - name: "Stand Alone"
+    os: linux
+    addons:
         apt:
-          sources:
+            sources:
             - ubuntu-toolchain-r-test
-          packages:
-            - g++-7
-      env:
+            #- sourceline: deb https://dl.bintray.com/solvingj/public-deb unstable main
+            packages:
+                - g++-7
+              #- libcurl4-openssl-dev
+              #- libboost-all-dev
+              #- libffi-dev
+              #- libssl-dev
+              #- libicu-dev
+              #- libc6
+    env:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 
 before_install:
     - eval "${MATRIX_EVAL}"
-
-install:
+    - git clone https://github.com/Kitware/CMake.git 
     - sudo apt-get install libcurl4-openssl-dev
     - sudo apt-get install libboost-all-dev
-    - sudo apt-get install libffi-dev libssl-dev 
+    - sudo apt-get install libffi-dev 
+    - sudo apt-get install libssl-dev
+    - sudo apt-get install libc6
+    - sudo apt-get install libicu-dev
     - pip install --user cget
     - cget install nlohmann/json
     - git clone https://github.com/zaphoyd/websocketpp.git
 
+install:
+    - cd CMake
+    - ./bootstrap 
+    - sudo make
+    - sudo make install
+    - cd ..
+    - mkdir build
+    - cd build
+    - /usr/local/bin/cmake -DTRAVIS=ON ..
+    - make
+
 script:
-- mv CMakeLists_travis.txt CMakeLists.txt
-- mkdir build
-- cd build
-- cmake ../.
-- make
-- ./roCORD
+    - ./roCORD
