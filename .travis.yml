@@ -33,17 +33,42 @@ before_install:
     - pip install --user cget
     - cget install nlohmann/json
     - git clone https://github.com/zaphoyd/websocketpp.git
+    - git clone https://github.com/rathena/rathena.git
 
 install:
+    # install cmake
     - cd CMake
     - ./bootstrap 
     - sudo make
     - sudo make install
     - cd ..
+
+    # prepare travis_stand_alone
     - mkdir build
     - cd build
     - /usr/local/bin/cmake -DTRAVIS=ON ..
     - make
+    - cd ..
+
+    # prepare travis_rathena 
+    - mkdir rathena/src/map/discord
+    - mkdir rathena/conf/discord
+    - cp CMakeLists.txt rathena/src/map/discord/.
+    - cp src/* rathena/src/map/discord/.
+    - cp config/* rathena/conf/discord/.
+    - patch rathena/src/map/channel.cpp diff/rev1/channel.diff
+    - patch rathena/src/map/map.cpp diff/rev1/map.diff
+    - patch rathena/src/map/script.cpp diff/rev1/script.diff
+    - patch rathena/src/map/CMakeLists.txt diff/rev1/CmakeLists.txt.diff
+    - mkdir rathena/build
+    - cd rathena/build
+    - /usr/local/bin/cmake -G"Unix Makefiles" -DINSTALL_TO_SOURCE=ON -DJSON=../../../../cget/cget/pkg/nlohmann__json/install/include/ -DWEBSOCKETPP=../../../../websocketpp ..
+    - cd ../..
 
 script:
+    - cd build/
     - ./roCORD
+    - cd ..
+
+    - cd rathena/build/
+    - make install
