@@ -141,6 +141,7 @@ void discord_core::handleReady(const std::string& guild_id) {
     std::string payload = " * We launched into outer space * "; // DEBUG VALUE
     this->dhttps.send(payload, channel_mapping->begin()->second);
     this->state = ON;
+    
 }
 
 /*
