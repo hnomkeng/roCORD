@@ -37,6 +37,7 @@ public:
     
 private:
     friend class discord_websocket;
+	void handleCmdInfo(const std::string& channel_id);
     void handleReady(const std::string& guild_id);
     void handleHello(int heartbeat_interval);
     void handleGuildCreate();
@@ -54,7 +55,7 @@ private:
     std::shared_ptr<std::vector<std::pair<std::string, std::string>>> channel_mapping; // TODO: has to be shared???
     std::shared_ptr<discord_websocket> dwss;
     std::thread dwss_thr;
-    discord_http dhttps;
+	std::unique_ptr<discord_http> dhttps;
     
 };
 

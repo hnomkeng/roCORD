@@ -76,7 +76,7 @@ void discord_http::request(struct curl_slist *header, const std::string& request
         
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, content.c_str());
 #ifdef TESTING
-		curl_easy_setopt(curl, CURLOPT_CAINFO, "../cacert.pem");
+		curl_easy_setopt(curl, CURLOPT_CAINFO, "../config/cacert.pem");
 #else
         curl_easy_setopt(curl, CURLOPT_CAINFO, "conf/discord/cacert.pem");
 #endif

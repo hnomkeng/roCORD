@@ -19,6 +19,8 @@ specifies which config version to use. Is required in every config.
 #### debug (int): 
 - 0 : OFF
 - 1 : ON
+
+
 #### display_name (string): 
 name of the bot in your server
 #### token (string): 
@@ -30,4 +32,6 @@ first string contains the ingame channel name (without #, like global, support, 
 
 
 ## CA Certificate
-TODO
+A certificate is provided in the config folder. It is used for encrypted communication.
+You can swap the provided certificate with your own trusted one.
+The provided certificate was extractet from a recent Mozilla Firefox version.
