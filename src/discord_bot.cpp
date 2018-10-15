@@ -8,6 +8,8 @@
 
 #include "discord_bot.hpp"
 #include "discord_core.hpp"
+#include "discord_websocket.hpp"
+#include "discord_http.hpp"
 #include <nlohmann/json.hpp>
 #include <iostream>
 #include <fstream>
@@ -144,12 +146,15 @@ int discord_init() {
         return -1;
     }
     
+    std::unique_ptr<discord_websocket> dwss(new discord_websocket(token, "wss://gateway.discord.gg/?v=6&encoding=json")); //TODO use factory pattern
+    std::unique_ptr<discord_http> dhttps(new discord_http(token));
+    
     /* TODO:
      *  Validate channel mapping !
      *  Check if the given channels do exist.
      *  Maybe validate somewhere else, since we dont know the Discord Channels yet!
      */
-    dcore = std::unique_ptr<discord_core>(new discord_core(display_name, token, presence, debug, version, channel_mapping));
+    dcore = std::unique_ptr<discord_core>(new discord_core(display_name, token, presence, debug, version, channel_mapping, std::move(dwss), std::move(dhttps)));
 #ifndef TESTING
 	add_timer_func_list(discord_handle, "discord_handle");
 	add_timer_interval(gettick()+100, discord_handle, 0, 0, 1000); //start in 1s each 1sec

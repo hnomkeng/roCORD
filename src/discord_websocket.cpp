@@ -12,8 +12,15 @@
 #include "discord_error.hpp"
 #include <boost/algorithm/string/predicate.hpp>
 
-discord_websocket::discord_websocket(std::string token) {
+
+typedef std::chrono::duration<int,std::micro> dur_type;
+
+
+discord_websocket::discord_websocket(std::string token, std::string uri) {
     this->token = token;
+    this->uri = uri;
+	this->heartbeat_active = false;
+	this->shutdown = false; //rework, should not set here, see cpp guidelines
 }
 
 template <typename Verifier> class verbose_verification
@@ -40,7 +47,7 @@ template <typename Verifier> verbose_verification<Verifier> make_verbose_verific
     return verbose_verification<Verifier>(verifier);
 }
 
-static websocketpp::lib::shared_ptr<boost::asio::ssl::context> on_tls_init(websocketpp::connection_hdl)
+websocketpp::lib::shared_ptr<boost::asio::ssl::context> discord_websocket::on_tls_init(websocketpp::connection_hdl)
 {
     websocketpp::lib::shared_ptr<boost::asio::ssl::context> ctx = websocketpp::lib::make_shared<boost::asio::ssl::context>(boost::asio::ssl::context::sslv23);
     
@@ -55,11 +62,53 @@ static websocketpp::lib::shared_ptr<boost::asio::ssl::context> on_tls_init(webso
 #endif
     ctx->set_verify_mode(boost::asio::ssl::verify_peer);
     ctx->set_verify_callback(make_verbose_verification(boost::asio::ssl::rfc2818_verification("gateway.discord.gg")));
-    
+   
+	 c_socket_init = std::chrono::high_resolution_clock::now(); 
     return ctx;
 }
 
-void discord_websocket::onMessage(websocketpp::client<websocketpp::config::asio_tls_client>* client, websocketpp::connection_hdl hdl, websocketpp::config::asio_tls_client::message_type::ptr msg)
+void discord_websocket::on_open(websocketpp::connection_hdl hdl) {
+	c.unlock();
+}
+
+void discord_websocket::on_fail(websocketpp::connection_hdl hdl) {
+        websocketpp::client<websocketpp::config::asio_tls_client>::connection_ptr con = client.get_con_from_hdl(hdl);
+        
+        std::cout << "Fail handler" << std::endl;
+        std::cout << con->get_state() << std::endl;
+        std::cout << con->get_local_close_code() << std::endl;
+        std::cout << con->get_local_close_reason() << std::endl;
+        std::cout << con->get_remote_close_code() << std::endl;
+        std::cout << con->get_remote_close_reason() << std::endl;
+        std::cout << con->get_ec() << " - " << con->get_ec().message() << std::endl;
+	c.unlock();
+    }
+
+void discord_websocket::on_close(websocketpp::connection_hdl hdl) {
+        c_close = std::chrono::high_resolution_clock::now();
+
+	std::cout << "Socket Init: " << std::chrono::duration_cast<dur_type>(c_socket_init-c_start).count() << std::endl;
+        std::cout << "TLS Init: " << std::chrono::duration_cast<dur_type>(c_tls_init-c_start).count() << std::endl;
+	std::cout << "Close: " << std::chrono::duration_cast<dur_type>(c_close-c_start).count() << std::endl;
+	
+	if (this->heartbeat_active) {
+   		this->heartbeat_active = false;
+		std::cout << "Waiting for heartbeat thread to finish!" << std::endl;
+    		this->heartbeat_thr.join();
+		std::cout << "Heartbeat thread successfully closed!" << std::endl;
+	}
+	this->started = false; // use type, state = ON, OFF, SHUTDOWN
+        auto event_ptr = std::bind(&discord_core::handleClose, std::placeholders::_1);
+    	std::lock_guard<std::mutex> lock(m);
+    	eventQueue.push(event_ptr);
+}
+
+
+void discord_websocket::on_socket_init(websocketpp::connection_hdl hdl) {
+	        c_socket_init = std::chrono::high_resolution_clock::now();
+}
+
+void discord_websocket::on_message(websocketpp::client<websocketpp::config::asio_tls_client>* client, websocketpp::connection_hdl hdl, websocketpp::config::asio_tls_client::message_type::ptr msg)
 {
     json s, t, d;
     int op = -1;
@@ -135,21 +184,34 @@ std::function<void(discord_core*)> discord_websocket::getNextEvent() {
 }
 
 void discord_websocket::run() {
-    client.set_tls_init_handler(on_tls_init);
+    //c.lock(); 
+    if (shutdown)
+	    return;
+    this->started = true;
+    std::cout << "thread was started" << std::endl;
+  
     client.init_asio();
     
     client.set_access_channels(websocketpp::log::alevel::all); // TODO debug settings
     
-    client.set_message_handler(websocketpp::lib::bind(&discord_websocket::onMessage, this, &client, websocketpp::lib::placeholders::_1, websocketpp::lib::placeholders::_2));
-    
+    client.set_message_handler(websocketpp::lib::bind(&discord_websocket::on_message, this, &client, websocketpp::lib::placeholders::_1, websocketpp::lib::placeholders::_2));
+	client.set_tls_init_handler(websocketpp::lib::bind(&discord_websocket::on_tls_init, this, websocketpp::lib::placeholders::_1));	
+	client.set_socket_init_handler(websocketpp::lib::bind(&discord_websocket::on_socket_init, this, websocketpp::lib::placeholders::_1));
+	client.set_close_handler(websocketpp::lib::bind(&discord_websocket::on_close, this, websocketpp::lib::placeholders::_1));
+	client.set_fail_handler(websocketpp::lib::bind(&discord_websocket::on_fail, this, websocketpp::lib::placeholders::_1));
+	client.set_open_handler(websocketpp::lib::bind(&discord_websocket::on_open, this, websocketpp::lib::placeholders::_1));
+
+
+ 
     websocketpp::lib::error_code errorCode;
-    connection = client.get_connection("wss://gateway.discord.gg/?v=6&encoding=json", errorCode); // TODO fix hardcode
+    connection = client.get_connection(this->uri, errorCode);
     if (errorCode)
     {
         std::cout << "Could not create an connection because " << errorCode.message() << std::endl;
     }
     
     client.connect(connection);
+	c_start = std::chrono::high_resolution_clock::now();
     client.run();
 }
 
@@ -195,13 +257,13 @@ void discord_websocket::sendIdentify(const std::string& token, const std::string
 
 void discord_websocket::startHeartbeat(int interval) {
     this->interval = interval;
+	this->heartbeat_active = true;
     this->heartbeat_thr = std::thread(&discord_websocket::do_heartbeat, this);
 }
 
 void discord_websocket::do_heartbeat() {
     websocketpp::lib::error_code errorCode;
     while (this->heartbeat_active) {
-        std::this_thread::sleep_for(std::chrono::milliseconds{ this->interval });
         json heartb =
                 {
                         { "op", 1 },
@@ -209,18 +271,31 @@ void discord_websocket::do_heartbeat() {
                 };
         this->client.send(this->connection->get_handle(), heartb.dump(), websocketpp::frame::opcode::text, errorCode);
         if (errorCode) { std::cerr << "Heartbeat failed because " << errorCode.message() << std::endl; }
+        std::this_thread::sleep_for(std::chrono::milliseconds{ this->interval });
     }
     std::cout << "Stopping heartbeat!" << std::endl;
 }
 
-void discord_websocket::final() {
-    this->heartbeat_active = false;
-    this->heartbeat_thr.join();
-    this->client.close(this->connection->get_handle(), websocketpp::close::status::normal, "Connection closed by client.");
+void discord_websocket::start() {
+	c.lock();
+  	this->socket_thr = std::thread(&discord_websocket::run, this);
 }
 
 discord_websocket::~discord_websocket() {
-    std::cout << "Websocket is shutting down!" << std::endl;
+	c.lock();
+    	std::cout << "Websocket is shutting down!" << std::endl;
+	if (this->started){
+		auto test = this->connection->get_handle();
+		try {
+    			this->client.close(test, websocketpp::close::status::normal, "Connection closed by client.");
+		} catch (websocketpp::exception const & e) {
+		        std::cout << e.what() << std::endl;
+		}
+		std::cout << "DWSS Connection closing!" << std::endl;
+	}
+	this->shutdown = true;
+	c.unlock();
+	this->socket_thr.join();
 }
 
 

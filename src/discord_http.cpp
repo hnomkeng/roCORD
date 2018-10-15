@@ -12,9 +12,8 @@
 
 using namespace nlohmann;
 
-discord_http::discord_http(std::string* token) {
-    this->token = token->c_str();
-    
+discord_http::discord_http(std::string token) {
+    this->token = token;
     curl_global_init(CURL_GLOBAL_DEFAULT);
     //this->curl = curl_easy_init();
 }
@@ -65,7 +64,7 @@ void discord_http::request(struct curl_slist *header, const std::string& request
         CURLcode res;
         char auth[256]; //TODO: fix me
         strcpy(auth, "Authorization:Bot ");
-        strcat(auth, token);
+        strcat(auth, token.c_str());
         header = curl_slist_append(header, auth);
         header = curl_slist_append(header, "User-Agent:roCORD (https://github.com/Normynator/Ragnarok, v1)");
         res = curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header);

@@ -84,6 +84,7 @@ We just need to install some more packages and are ready to go.
  $ cd
  $ sudo apt-get install libboost-all-dev
  $ sudo apt-get install libcurl4-openssl-dev
+ $ sudo apt-get install libssl1.0-dev
 ```
 
 #### Compiling and starting rAthena with roCORD!

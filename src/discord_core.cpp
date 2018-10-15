@@ -24,23 +24,17 @@
 	#include "../clif.hpp"
 #endif
 
-discord_core::discord_core(std::string display_name_, std::string token_, std::string presence_, int debug_, int version_, std::shared_ptr<std::vector<std::pair<std::string, std::string>>> channel_mapping_) : display_name{display_name_}, token{token_}, presence{presence_}, debug{debug_}, config_version{version_}, channel_mapping{channel_mapping_} {
-    this->guild_id = "";
+discord_core::discord_core(std::string display_name_, std::string token_, std::string presence_, int debug_, int version_, std::shared_ptr<std::vector<std::pair<std::string, std::string>>> channel_mapping_, std::unique_ptr<discord_websocket> dwss_, std::unique_ptr<discord_http> dhttps_) : display_name(display_name_), token(token_), presence(presence_), debug(debug_), config_version(version_), channel_mapping(channel_mapping_), dwss(std::move(dwss_)), dhttps(std::move(dhttps_)) {
+	this->guild_id = "";
     this->state = OFF;
-    this->dwss = std::make_shared<discord_websocket>(this->token);
-    this->dwss_thr = std::thread(&discord_websocket::run, dwss);
-    //this->dhttps = std::make_unique<discord_http>(&this->token);
-    this->dhttps = std::unique_ptr<discord_http>{new discord_http(&this->token)}; //TODO should be const
-    // heartbeat thread
+    this->dwss->start();
     this->info();
 };
 
 
 discord_core::~discord_core() {
-    this->dwss->final();
-    this->dwss_thr.join();
-    std::cout << "Pointer to dwss left: " << dwss.use_count() << std::endl;
-    std::cout << "Core is shutting down now!" << std::endl;
+	this->state = OFF;
+	std::cout << "Core is shutting down now!" << std::endl;
 }
 
 /*
@@ -53,8 +47,6 @@ int discord_core::toDiscord(std::string& msg, const std::string& channel, std::s
 	  if (!name)
 		*name = ""; // if webhooks are used, this should be the bot name;
 	*/
-	//std::string channel_ = "#";
-	//channel_.append(channel);
 	std::string channel_id;
 	for(auto it = channel_mapping->begin(); it != channel_mapping->end(); it++) {
 		if (it->first == channel) {
@@ -141,7 +133,6 @@ void discord_core::handleReady(const std::string& guild_id) {
     std::string payload = " * We launched into outer space * "; // DEBUG VALUE
     this->dhttps->send(payload, channel_mapping->begin()->second);
     this->state = ON;
-    
 }
 
 /*
@@ -153,13 +144,13 @@ void discord_core::handleMessageCreate(const std::string& author, const std::str
     if (author == this->display_name)
         return;
     
-	if (content.length() > 150)
-		return;
+    if (content.length() > 150)
+	return;
 
-    std::string channel;
+    std::string channel = "#";
     for(auto it = channel_mapping->begin(); it != channel_mapping->end(); it++) {
         if (it->second == d_channel) {
-            channel = it->first;
+            channel.append(it->first);
             break;
         }
     }
@@ -214,12 +205,17 @@ void discord_core::handleGuildCreate() {
  */
 void discord_core::handleHello(int heartbeat_interval) {
     ShowInfo("Discord: Hello Event!");
-    this->dwss->heartbeat_active = true;
     this->dwss->startHeartbeat(heartbeat_interval / 2); // TODO configable
     this->dwss->sendIdentify(this->token, this->presence);
     this->state = CONNECTING;
 }
 
+void discord_core::handleClose() {
+	this->dhttps->send("Debugging: WebSocket was closed! Trying to restart!", channel_mapping->begin()->second);
+	ShowError("WebSocket was closed! Trying to restart!");
+	dwss.reset(new discord_websocket(this->token, "wss://gateway.discord.gg/?v=6&encoding=json"));	
+
+}
 /*
  * Private
  * Gives information about the bot back to discord.
