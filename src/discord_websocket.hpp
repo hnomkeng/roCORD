@@ -34,6 +34,7 @@ public:
     void start();
     void sendIdentify(const std::string& token, const std::string& presence);
     void startHeartbeat(int interval);
+	std::chrono::time_point<std::chrono::system_clock> getStartTime();
     
 private:
     void on_message(websocketpp::client<websocketpp::config::asio_tls_client>* client, websocketpp::connection_hdl hdl, websocketpp::config::asio_tls_client::message_type::ptr msg);
@@ -47,6 +48,7 @@ private:
     std::chrono::high_resolution_clock::time_point c_socket_init;
     std::chrono::high_resolution_clock::time_point c_tls_init;
     std::chrono::high_resolution_clock::time_point c_close;
+    std::chrono::time_point<std::chrono::system_clock> start_time;
 	int sequence_number;
     std::string token;
     std::string uri;

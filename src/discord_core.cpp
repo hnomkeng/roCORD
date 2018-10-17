@@ -27,6 +27,7 @@
 discord_core::discord_core(std::string display_name_, std::string token_, std::string presence_, int debug_, int version_, std::shared_ptr<std::vector<std::pair<std::string, std::string>>> channel_mapping_, std::unique_ptr<discord_websocket> dwss_, std::unique_ptr<discord_http> dhttps_) : display_name(display_name_), token(token_), presence(presence_), debug(debug_), config_version(version_), channel_mapping(channel_mapping_), dwss(std::move(dwss_)), dhttps(std::move(dhttps_)) {
 	this->guild_id = "";
     this->state = OFF;
+    this->start_time = std::chrono::system_clock::now();
     this->dwss->start();
     this->info();
 };
@@ -213,17 +214,33 @@ void discord_core::handleHello(int heartbeat_interval) {
 void discord_core::handleClose() {
 	this->dhttps->send("Debugging: WebSocket was closed! Trying to restart!", channel_mapping->begin()->second);
 	ShowError("WebSocket was closed! Trying to restart!");
-	dwss.reset(new discord_websocket(this->token, "wss://gateway.discord.gg/?v=6&encoding=json"));	
-
+	this->dwss.reset(new discord_websocket(this->token, "wss://gateway.discord.gg/?v=6&encoding=json"));	
+	this->dwss->start();	
 }
 /*
  * Private
  * Gives information about the bot back to discord.
  */
 void discord_core::handleCmdInfo(const std::string& channel_id) {
-	this->dhttps->send("Bot created by norm.\nAvailable commands:\n- !info: shows this info text\n", channel_id);	
+	this->dhttps->send("Bot created by norm.\nAvailable commands:\n- !info: shows this info text\n- !uptime: shows how long bot/socket/server are running without a restart\n", channel_id);	
 }
 
+/*
+ * Private
+ */
+void discord_core::handleCmdUptime(const std::string& channel_id) {
+	std::chrono::time_point<std::chrono::system_clock> bot, socket;
+	int bot_uptime_h = std::chrono::duration_cast<std::chrono::hours>(std::chrono::system_clock::now() - this->start_time).count();
+	int socket_uptime_h = std::chrono::duration_cast<std::chrono::hours>(std::chrono::system_clock::now() - this->dwss->getStartTime()).count();
+	int socket_uptime_m = std::chrono::duration_cast<std::chrono::minutes>(std::chrono::system_clock::now() - this->dwss->getStartTime()).count();
+	int bot_uptime_m = std::chrono::duration_cast<std::chrono::minutes>(std::chrono::system_clock::now() - this->start_time).count();
+
+	socket_uptime_m -= socket_uptime_h * 60;
+	bot_uptime_m -= bot_uptime_h * 60;
+	std::ostringstream ss;
+	ss << "Uptime:\n--> Bot: " << bot_uptime_h << "h " << bot_uptime_m << "m\n--> Socket: " << socket_uptime_h << "h " << socket_uptime_m << "m\n--> Server: not available";
+	this->dhttps->send(ss.str(), channel_id);	
+}
 /*
  * Private
  */

@@ -67,7 +67,12 @@ websocketpp::lib::shared_ptr<boost::asio::ssl::context> discord_websocket::on_tl
     return ctx;
 }
 
+std::chrono::time_point<std::chrono::system_clock> discord_websocket::getStartTime() {
+	return this->start_time;
+}
+
 void discord_websocket::on_open(websocketpp::connection_hdl hdl) {
+	this->start_time = std::chrono::system_clock::now();
 	c.unlock();
 }
 
@@ -142,7 +147,10 @@ void discord_websocket::on_message(websocketpp::client<websocketpp::config::asio
 				std::string channel_id = d.at("channel_id");
 				if (d.at("content") == "!info") {
 					event_ptr = std::bind(&discord_core::handleCmdInfo, std::placeholders::_1, channel_id);
-				} else {
+				} else if (d.at("content") == "!uptime") { 
+					event_ptr = std::bind(&discord_core::handleCmdUptime, std::placeholders::_1, channel_id);	
+				
+	    			} else {
                 	std::cout << d.dump() << std::endl;
                 	std::string author = d.at("author").at("username");
                 	std::string nick;

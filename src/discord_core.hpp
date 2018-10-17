@@ -15,6 +15,7 @@
 #include <functional>
 #include <queue>
 #include <thread>
+#include <chrono>
 #include "discord_websocket.hpp"
 #include "discord_http.hpp"
 
@@ -42,10 +43,12 @@ private:
     void handleHello(int heartbeat_interval);
     void handleGuildCreate();
     void handleClose();
+    void handleCmdUptime(const std::string& channel_id);
 	void convert_latin1(std::string& content);
     void convert_utf8(std::string& content);
     bool check_ISO8859_1(const std::string& content);
     void handleMessageCreate(const std::string& author, const std::string& nick, std::string& content, const std::string& d_channel);
+    std::chrono::time_point<std::chrono::system_clock> start_time;
     std::string display_name;
 	std::string token;
     std::string presence;
