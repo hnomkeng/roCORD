@@ -56,10 +56,10 @@ install:
     - cp CMakeLists.txt rathena/src/map/discord/.
     - cp src/* rathena/src/map/discord/.
     - cp config/* rathena/conf/discord/.
-    - patch rathena/src/map/channel.cpp diff/rev1/channel.diff
-    - patch rathena/src/map/map.cpp diff/rev1/map.diff
-    - patch rathena/src/map/script.cpp diff/rev1/script.diff
-    - patch rathena/src/map/CMakeLists.txt diff/rev1/CmakeLists.txt.diff
+    - patch rathena/src/map/channel.cpp diff/rev2/channel.diff
+    - patch rathena/src/map/map.cpp diff/rev2/map.diff
+    - patch rathena/src/map/script.cpp diff/rev2/script.diff
+    - patch rathena/src/map/CMakeLists.txt diff/rev2/CmakeLists.txt.diff
     - mkdir rathena/build
     - cd rathena/build
     - /usr/local/bin/cmake -G"Unix Makefiles" -DINSTALL_TO_SOURCE=ON -DJSON=../../../../cget/cget/pkg/nlohmann__json/install/include/ -DWEBSOCKETPP=../../../../websocketpp ..
