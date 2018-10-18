@@ -16,12 +16,7 @@
 typedef std::chrono::duration<int,std::micro> dur_type;
 
 
-discord_websocket::discord_websocket(std::string token, std::string uri) {
-    this->token = token;
-    this->uri = uri;
-	this->heartbeat_active = false;
-	this->shutdown = false; //rework, should not set here, see cpp guidelines
-}
+discord_websocket::discord_websocket(std::string token, std::string uri) : token(token), uri(uri) {}
 
 template <typename Verifier> class verbose_verification
 {
@@ -103,7 +98,7 @@ void discord_websocket::on_close(websocketpp::connection_hdl hdl) {
 		std::cout << "Heartbeat thread successfully closed!" << std::endl;
 	}
 	this->started = false; // use type, state = ON, OFF, SHUTDOWN
-        auto event_ptr = std::bind(&discord_core::handleClose, std::placeholders::_1);
+        auto event_ptr = std::bind(&discord_core::handle_close, std::placeholders::_1);
     	std::lock_guard<std::mutex> lock(m);
     	eventQueue.push(event_ptr);
 }
@@ -135,20 +130,20 @@ void discord_websocket::on_message(websocketpp::client<websocketpp::config::asio
             if (t == "READY") {
                 std::cout << payload.at("d").dump() << std::endl;
                 std::string guild = payload.at("d").at("guilds")[0].at("id");
-                event_ptr = std::bind(&discord_core::handleReady, std::placeholders::_1, guild);
+                event_ptr = std::bind(&discord_core::handle_ready, std::placeholders::_1, guild);
             }
             else if (t == "GUILD_CREATE") {
                 // TODO
-                event_ptr = std::bind(&discord_core::handleGuildCreate, std::placeholders::_1);
+                event_ptr = std::bind(&discord_core::handle_guild_create, std::placeholders::_1);
             }
             else if (t == "MESSAGE_CREATE") {
 				d = payload.at("d");
 				std::string content = d.at("content");
 				std::string channel_id = d.at("channel_id");
 				if (d.at("content") == "!info") {
-					event_ptr = std::bind(&discord_core::handleCmdInfo, std::placeholders::_1, channel_id);
+					event_ptr = std::bind(&discord_core::handle_cmd_info, std::placeholders::_1, channel_id);
 				} else if (d.at("content") == "!uptime") { 
-					event_ptr = std::bind(&discord_core::handleCmdUptime, std::placeholders::_1, channel_id);	
+					event_ptr = std::bind(&discord_core::handle_cmd_uptime, std::placeholders::_1, channel_id);	
 				
 	    			} else {
                 	std::cout << d.dump() << std::endl;
@@ -156,7 +151,7 @@ void discord_websocket::on_message(websocketpp::client<websocketpp::config::asio
                 	std::string nick;
 					if((d.at("member").find("nick") != d.at("member").end()) && !d.at("member").at("nick").is_null()) 
                    		nick = d.at("member").at("nick");
-                	event_ptr = std::bind(&discord_core::handleMessageCreate, std::placeholders::_1, author, nick, content, channel_id);
+                	event_ptr = std::bind(&discord_core::handle_message_create, std::placeholders::_1, author, nick, content, channel_id);
 				}
             } else
                 std::cout << "Unhandled t value: " << t << std::endl;
@@ -164,7 +159,7 @@ void discord_websocket::on_message(websocketpp::client<websocketpp::config::asio
             break;
         case 10:
             heartbeat_interval = payload.at("d").at("heartbeat_interval");
-            event_ptr = std::bind(&discord_core::handleHello, std::placeholders::_1, heartbeat_interval);
+            event_ptr = std::bind(&discord_core::handle_hello, std::placeholders::_1, heartbeat_interval);
             break;
         case 11:
             std::cout << "Heartbeat ACK: " << std::string(payload.dump()) << std::endl;

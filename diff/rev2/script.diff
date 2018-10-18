@@ -1,0 +1,21 @@
+63a64,65
+> #include "discord/discord_bot.hpp"
+> 
+23931a23934,23946
+> /*
+>  * Sends a message via script cmd to server
+>  */
+> BUILDIN_FUNC(discord) {
+> 	const char* msg = script_getstr(st,2);
+> 	const char* channel = script_getstr(st,3);
+> 	const int ret = discord_script(msg, channel);
+> 	if(ret == 0)
+> 		return SCRIPT_CMD_SUCCESS;
+> 	else
+> 		return SCRIPT_CMD_FAILURE;
+> }
+> 
+24474a24490,24492
+> 
+> 	// Discord
+> 	BUILDIN_DEF(discord,"ss"),

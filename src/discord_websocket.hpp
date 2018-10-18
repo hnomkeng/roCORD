@@ -23,21 +23,20 @@ using namespace nlohmann;
 class discord_core;
 
 class discord_websocket {
-    std::mutex m;
-    std::mutex c;
+
 public:
-    discord_websocket() {};
-    discord_websocket(std::string token, std::string uri); //TODO copy by value
-    virtual ~discord_websocket();
-    void final();
-    std::function<void(discord_core*)> getNextEvent();
-    void start();
-    void sendIdentify(const std::string& token, const std::string& presence);
-    void startHeartbeat(int interval);
+	discord_websocket() {};
+    	discord_websocket(std::string token, std::string uri); //TODO copy by value
+    	virtual ~discord_websocket();
+    	void final();
+    	std::function<void(discord_core*)> getNextEvent();
+    	void start();
+    	void sendIdentify(const std::string& token, const std::string& presence);
+    	void startHeartbeat(int interval);
 	std::chrono::time_point<std::chrono::system_clock> getStartTime();
     
 private:
-    void on_message(websocketpp::client<websocketpp::config::asio_tls_client>* client, websocketpp::connection_hdl hdl, websocketpp::config::asio_tls_client::message_type::ptr msg);
+    	void on_message(websocketpp::client<websocketpp::config::asio_tls_client>* client, websocketpp::connection_hdl hdl, websocketpp::config::asio_tls_client::message_type::ptr msg);
 	void on_close(websocketpp::connection_hdl hdl);	
 	void on_fail(websocketpp::connection_hdl hdl);
 	void on_open(websocketpp::connection_hdl hdl);	
@@ -45,23 +44,25 @@ private:
 	websocketpp::lib::shared_ptr<boost::asio::ssl::context> on_tls_init(websocketpp::connection_hdl);
 	void run();
 	std::chrono::high_resolution_clock::time_point c_start;
-    std::chrono::high_resolution_clock::time_point c_socket_init;
-    std::chrono::high_resolution_clock::time_point c_tls_init;
-    std::chrono::high_resolution_clock::time_point c_close;
-    std::chrono::time_point<std::chrono::system_clock> start_time;
+    	std::chrono::high_resolution_clock::time_point c_socket_init;
+    	std::chrono::high_resolution_clock::time_point c_tls_init;
+    	std::chrono::high_resolution_clock::time_point c_close;
+    	std::chrono::time_point<std::chrono::system_clock> start_time;
 	int sequence_number;
-    std::string token;
-    std::string uri;
-	bool heartbeat_active;
+    	std::string token;
+	std::string uri;
+	bool heartbeat_active = false;
 	bool shutdown = false;
 	bool started = false;
-    void do_heartbeat();
-    int interval;
-    std::thread heartbeat_thr;
-    std::thread socket_thr;
-    websocketpp::client<websocketpp::config::asio_tls_client> client;
-    std::queue<std::function<void(discord_core*)>> eventQueue;
-    websocketpp::client<websocketpp::config::asio_tls_client>::connection_ptr connection;
+    	void do_heartbeat();
+    	int interval;
+    	std::thread heartbeat_thr;
+    	std::thread socket_thr;
+    	websocketpp::client<websocketpp::config::asio_tls_client> client;
+    	std::queue<std::function<void(discord_core*)>> eventQueue;
+    	websocketpp::client<websocketpp::config::asio_tls_client>::connection_ptr connection;
+    	std::mutex m;
+	std::mutex c;
 };
 
 #endif /* discord_websocket_hpp */

@@ -13,6 +13,7 @@
 #include <boost/locale.hpp>
 #include <sstream>
 #include <future>
+#include <regex>
 
 #include "discord_error.hpp"
 
@@ -24,9 +25,7 @@
 	#include "../clif.hpp"
 #endif
 
-discord_core::discord_core(std::string display_name_, std::string token_, std::string presence_, int debug_, int version_, std::shared_ptr<std::vector<std::pair<std::string, std::string>>> channel_mapping_, std::unique_ptr<discord_websocket> dwss_, std::unique_ptr<discord_http> dhttps_) : display_name(display_name_), token(token_), presence(presence_), debug(debug_), config_version(version_), channel_mapping(channel_mapping_), dwss(std::move(dwss_)), dhttps(std::move(dhttps_)) {
-	this->guild_id = "";
-    this->state = OFF;
+discord_core::discord_core(std::string display_name_, std::string token_, std::string presence_, int debug_, std::shared_ptr<std::vector<std::pair<std::string, std::string>>> channel_mapping_, std::unique_ptr<discord_websocket> dwss_, std::unique_ptr<discord_http> dhttps_) : display_name(display_name_), token(token_), presence(presence_), debug(debug_), channel_mapping(channel_mapping_), dwss(std::move(dwss_)), dhttps(std::move(dhttps_)) {
     this->start_time = std::chrono::system_clock::now();
     this->dwss->start();
     this->info();
@@ -43,11 +42,16 @@ discord_core::~discord_core() {
  * Sends a message from rAthena SRC to Discord
  * @param name, can be nullptr if message not from player
  */
-int discord_core::toDiscord(std::string& msg, const std::string& channel, std::string* name) {
+int discord_core::to_discord(std::string& msg, const std::string& channel, std::string* name) {
 	/*
 	  if (!name)
 		*name = ""; // if webhooks are used, this should be the bot name;
 	*/
+	if (this->get_state() == OFF) {
+		ShowError("Bot is not in ON State!");
+		return -1;
+	}
+
 	std::string channel_id;
 	for(auto it = channel_mapping->begin(); it != channel_mapping->end(); it++) {
 		if (it->first == channel) {
@@ -57,8 +61,8 @@ int discord_core::toDiscord(std::string& msg, const std::string& channel, std::s
 	}
 
 	if(channel_id.empty()) {
-		ShowWarning("Discord channel has no mapping!");
-		return -1;
+		//ShowWarning("Discord channel has no mapping!");
+		return -2; // no mapping
 	}
 #ifdef _WIN32
 	if (name)
@@ -79,7 +83,7 @@ int discord_core::toDiscord(std::string& msg, const std::string& channel, std::s
  * Public
  * Return current connection state
  */
-State discord_core::getState() {
+State discord_core::get_state() {
     return this->state;
 }
 
@@ -87,7 +91,7 @@ State discord_core::getState() {
  * Public
  * A public method to change the display name via discord_bot adapter.
  */
-void discord_core::setDisplayName(const std::string& display_name) {
+void discord_core::set_display_name(const std::string& display_name) {
     if (this->display_name == display_name)
         return;
     this->dhttps->setDisplayName(display_name, this->guild_id);
@@ -98,7 +102,7 @@ void discord_core::setDisplayName(const std::string& display_name) {
  * Public
  * Handles events from discord API.
  */
-void discord_core::handleEvents() {
+void discord_core::handle_events() {
     std::function<void(discord_core*)> event = this->dwss->getNextEvent();
     if(event)
         event(this);
@@ -127,7 +131,7 @@ void discord_core::info() {
  * Private
  * Handles the Ready Event from Discord API.
  */
-void discord_core::handleReady(const std::string& guild_id) {
+void discord_core::handle_ready(const std::string& guild_id) {
     ShowInfo("Discord: Ready Event!");
     this->guild_id = guild_id; // TODO
     this->dhttps->setDisplayName(this->display_name, this->guild_id); // init set of display_name
@@ -140,7 +144,7 @@ void discord_core::handleReady(const std::string& guild_id) {
  * Private
  * Handles a message from Discord server.
  */
-void discord_core::handleMessageCreate(const std::string& author, const std::string& nick, std::string& content, const std::string& d_channel) {
+void discord_core::handle_message_create(const std::string& author, const std::string& nick, std::string& content, const std::string& d_channel) {
     ShowInfo("Discord: Message Event!");
     if (author == this->display_name)
         return;
@@ -168,10 +172,21 @@ void discord_core::handleMessageCreate(const std::string& author, const std::str
 		ShowError("[roCORD] Channel was not found!");
 		return;
 	}
+
     std::string msg = r_channel->alias;
 #else
 	std::string msg = channel;
 #endif
+	convert_utf8(content);
+
+	// Checking if #channel or @main was used, remove it for now!
+	content = std::regex_replace(content, std::regex("<@![0-9]*>"), "");
+	content = std::regex_replace(content, std::regex("<#[0-9]*>"), "");
+
+	// Remove whitespace at the end and beginning.
+	content = std::regex_replace(content, std::regex("^\\s|\\s$"), "");
+	if (content.length() < 1)
+		return;
     msg.append("<");
     if (!nick.empty() && check_ISO8859_1(nick))
         msg.append(nick);
@@ -182,7 +197,6 @@ void discord_core::handleMessageCreate(const std::string& author, const std::str
     msg.append(">: ");
     msg.append(content);
 	
-	convert_utf8(msg);
 
 #ifdef TESTING
     ShowInfo(msg.c_str());
@@ -195,7 +209,7 @@ void discord_core::handleMessageCreate(const std::string& author, const std::str
  * Private
  * Handles the content of the Discord server.
  */
-void discord_core::handleGuildCreate() {
+void discord_core::handle_guild_create() {
     ShowInfo("Discord: GuildCreate Event");
     std::cout << "GuildCreate has to be handled!" << std::endl;
 }
@@ -204,14 +218,14 @@ void discord_core::handleGuildCreate() {
  * Private
  * Handles the init Event from Discord API.
  */
-void discord_core::handleHello(int heartbeat_interval) {
+void discord_core::handle_hello(int heartbeat_interval) {
     ShowInfo("Discord: Hello Event!");
     this->dwss->startHeartbeat(heartbeat_interval / 2); // TODO configable
     this->dwss->sendIdentify(this->token, this->presence);
     this->state = CONNECTING;
 }
 
-void discord_core::handleClose() {
+void discord_core::handle_close() {
 	this->dhttps->send("Debugging: WebSocket was closed! Trying to restart!", channel_mapping->begin()->second);
 	ShowError("WebSocket was closed! Trying to restart!");
 	this->dwss.reset(new discord_websocket(this->token, "wss://gateway.discord.gg/?v=6&encoding=json"));	
@@ -221,14 +235,14 @@ void discord_core::handleClose() {
  * Private
  * Gives information about the bot back to discord.
  */
-void discord_core::handleCmdInfo(const std::string& channel_id) {
+void discord_core::handle_cmd_info(const std::string& channel_id) {
 	this->dhttps->send("Bot created by norm.\nAvailable commands:\n- !info: shows this info text\n- !uptime: shows how long bot/socket/server are running without a restart\n", channel_id);	
 }
 
 /*
  * Private
  */
-void discord_core::handleCmdUptime(const std::string& channel_id) {
+void discord_core::handle_cmd_uptime(const std::string& channel_id) {
 	std::chrono::time_point<std::chrono::system_clock> bot, socket;
 	int bot_uptime_h = std::chrono::duration_cast<std::chrono::hours>(std::chrono::system_clock::now() - this->start_time).count();
 	int socket_uptime_h = std::chrono::duration_cast<std::chrono::hours>(std::chrono::system_clock::now() - this->dwss->getStartTime()).count();
@@ -267,3 +281,8 @@ void discord_core::convert_latin1(std::string& content) {
 	std::string latin1 = "ISO-8859-1";
 	content = boost::locale::conv::to_utf<char>(content, "ISO-8859-1");
 }
+
+
+
+
+

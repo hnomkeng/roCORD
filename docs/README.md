@@ -7,3 +7,6 @@
 - [Script Commands](https://github.com/Normynator/roCORDTesting/blob/dev/docs/script_commands.md#script-commands)
   - [discord](https://github.com/Normynator/roCORDTesting/blob/dev/docs/script_commands.md#discordstring-string)
 - At Commands
+- [Bot Commands](https://github.com/Normynator/roCORDTesting/blob/dev/docs/bot_commands.md)
+  - [!info](https://github.com/Normynator/roCORDTesting/blob/dev/docs/bot_commands.md#info)
+  - [!uptime](https://github.com/Normynator/roCORDTesting/blob/dev/docs/bot_commands.md#uptime)

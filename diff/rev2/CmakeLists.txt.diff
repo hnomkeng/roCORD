@@ -1,0 +1,8 @@
+5c5
+< 
+---
+> add_subdirectory (discord)
+35c35
+< target_link_libraries( map-server ${LIBRARIES} ${DEPENDENCIES} )
+---
+> target_link_libraries( map-server ${LIBRARIES} ${DEPENDENCIES} roCORD )

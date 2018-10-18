@@ -37,7 +37,7 @@ class CoreTest : public ::testing::Test {
 	std::unique_ptr<discord_websocket> dwss(new fake_websocket("12345678", "wss://gateway.discord.gg/?v=6&encoding=json"));
 	std::unique_ptr<discord_http> dhttps(new fake_http());	
 
-	dcore = std::unique_ptr<discord_core>(new discord_core("Test Name", "12345678", "Test Presence", 0, 1, channel_mapping, std::move(dwss), std::move(dhttps)));
+	dcore = std::unique_ptr<discord_core>(new discord_core("Test Name", "12345678", "Test Presence", 0, channel_mapping, std::move(dwss), std::move(dhttps)));
 	
   }
 

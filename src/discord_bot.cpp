@@ -27,40 +27,45 @@ std::unique_ptr<discord_core> dcore;
 
 #ifdef TESTING
 void discord_handle() {
-	dcore->handleEvents();
+	dcore->handle_events();
 }
 #else
 /*
  * Entry point to hand control to bot.
  */
 TIMER_FUNC(discord_handle) {
-    dcore->handleEvents();
+    	dcore->handle_events();
 	add_timer(gettick()+100, discord_handle, 0, 0);
 	return 0;
 }
 #endif
 
 /*
- * Entry point to send a message to discord.
+ * Entrypoint to send a message to discord.
  */
-void discord_toDiscord(const char* msg, const char* channel, const char* name) {
-    if (dcore->getState() == ON) {
-		std::string msg_s = msg;
-		std::string channel_s = channel;
-		std::string name_s = name;
-        dcore->toDiscord(msg_s, channel_s, &name_s);
-	} else
-        ShowWarning("Discord is not in an ON State!");
-}
-
-int discord_script(const char* msg, const char* channel) {
-	if (dcore->getState() == OFF) {
-		ShowWarning("Discord is not in ON State!");
-		return -1;
-	}
+void discord_send(const char* msg, const char* channel, const char* name) {
 	std::string msg_s = msg;
 	std::string channel_s = channel;
-    return dcore->toDiscord(msg_s, channel_s, nullptr);
+	std::string name_s = name;
+        dcore->to_discord(msg_s, channel_s, &name_s);
+}
+
+/*
+ * Entrypoint for script command.
+ */
+int discord_script(const char* msg, const char* channel) {
+	std::string msg_s = msg;
+	std::string channel_s = channel;
+    	return dcore->to_discord(msg_s, channel_s, nullptr);
+}
+
+/*
+ * Entrypoint to announce mobdrops.
+ */
+void discord_announce_drop(const char* msg) {
+	std::string channel = "drop_announce";
+	std::string msg_s = msg;
+	dcore->to_discord(msg_s, channel, nullptr);
 }
 
 /*
@@ -85,7 +90,7 @@ int discord_init() {
 	std::ifstream ifs("conf/discord/config.json");
 #endif
     json data;
-    int version, debug;
+    int debug;
     std::shared_ptr<std::vector<std::pair<std::string, std::string>>> channel_mapping;
     std::string display_name, token, presence;
     if (ifs.fail()) {
@@ -95,13 +100,6 @@ int discord_init() {
 
     try {
         data = json::parse(ifs);
-        if (data.find("version") != data.end())
-            version = data.at("version");
-        else {
-            ShowError("[roCORD] Version is not defined! Aborting!\n");
-            return -1;
-        }
-
         if (data.find("token") != data.end())
             token = data.at("token");
         else {
@@ -154,7 +152,7 @@ int discord_init() {
      *  Check if the given channels do exist.
      *  Maybe validate somewhere else, since we dont know the Discord Channels yet!
      */
-    dcore = std::unique_ptr<discord_core>(new discord_core(display_name, token, presence, debug, version, channel_mapping, std::move(dwss), std::move(dhttps)));
+    dcore = std::unique_ptr<discord_core>(new discord_core(display_name, token, presence, debug, channel_mapping, std::move(dwss), std::move(dhttps)));
 #ifndef TESTING
 	add_timer_func_list(discord_handle, "discord_handle");
 	add_timer_interval(gettick()+100, discord_handle, 0, 0, 1000); //start in 1s each 1sec
