@@ -12,7 +12,7 @@ set (CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++1y -Wall")
 if (DEFINED TRAVIS OR DEFINED STAND_ALONE)
 	project (roCORD)
 	set (CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -D TESTING")
-	set (roCORD_src src/main.cpp src/clif_testing.cpp src/showmsg_testing.cpp src/discord_bot.cpp src/discord_core.cpp src/discord_error.cpp src/discord_http.cpp src/discord_websocket.cpp test/core_test.cpp)
+	set (roCORD_src src/main.cpp src/clif_testing.cpp src/showmsg_testing.cpp src/discord_bot.cpp src/discord_core.cpp src/discord_error.cpp src/discord_http.cpp src/discord_websocket.cpp test/core_test.cpp test/bot_test.cpp)
 
 	# Download and unpack googletest at configure time
     	configure_file(CMakeLists.txt.in googletest-download/CMakeLists.txt)

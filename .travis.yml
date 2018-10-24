@@ -30,6 +30,7 @@ before_install:
     - sudo apt-get install libssl-dev
     - sudo apt-get install libc6
     - sudo apt-get install libicu-dev
+    - sudo apt-get install valgrind
     - pip install --user cget
     - cget install nlohmann/json
     - git clone https://github.com/zaphoyd/websocketpp.git
@@ -67,7 +68,7 @@ install:
 
 script:
     - cd build/
-    - ./roCORD
+    - valgrind --error-exitcode=-1 -q ./roCORD
     - cd ..
 
     - cd rathena/build/

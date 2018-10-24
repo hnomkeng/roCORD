@@ -1,6 +1,6 @@
 #include <limits.h>
 #include <stdio.h>
-#include "../src/discord_core.hpp"
+#include "../src/discord_bot.hpp"
 #include "fake_http.hpp"
 #include "fake_websocket.hpp"
 #include "gtest/gtest.h"
@@ -8,7 +8,6 @@
 #include "gmock/gmock.h"
 #include "gmock/gmock-matchers.h"
 #include "gmock/gmock-more-matchers.h"
-#include "fake_api.cpp"
 
 namespace testing {
 namespace gmock_matchers_test {
@@ -76,7 +75,7 @@ TEST_F(CoreTest, Constructor) {
 }*/
 
 TEST(CoreTestAdv, reconnect) {
-	run();
+	//run();
 }
 
 /*TEST(CoreTest, channelName) {

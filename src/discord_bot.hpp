@@ -12,6 +12,7 @@
 #include <string>
 #include <stdio.h>
 #include <iostream>
+#include "discord_core.hpp"
 
 #ifndef TESTING
 #include "../../common/timer.hpp"
@@ -24,5 +25,6 @@ void discord_send(const char* msg, const char* channel, const char* name);
 int discord_init();
 void discord_free();
 int discord_script(const char* msg, const char* channel);
+void discord_announce_drop(const char* msg);
 
 #endif /* discord_bot_hpp */

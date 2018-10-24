@@ -23,6 +23,7 @@ public:
     void send(const std::string& payload, const std::string& channel_id);
     void setDisplayName(const std::string& display_name, const std::string& guild_id);
 private:
+    CURL* curl;
     std::string token; //TODO should be const
     void request(struct curl_slist *header, const std::string& request_type /* TODO ENUM */, const std::string& url, const std::string& content);
 };

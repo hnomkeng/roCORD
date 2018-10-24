@@ -7,7 +7,6 @@
 //
 
 #include "discord_bot.hpp"
-#include "discord_core.hpp"
 #include "discord_websocket.hpp"
 #include "discord_http.hpp"
 #include <nlohmann/json.hpp>

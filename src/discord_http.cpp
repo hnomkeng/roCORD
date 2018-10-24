@@ -14,17 +14,20 @@ using namespace nlohmann;
 
 discord_http::discord_http(std::string token) {
     this->token = token;
-    curl_global_init(CURL_GLOBAL_DEFAULT);
-    //this->curl = curl_easy_init();
+   curl_global_init(CURL_GLOBAL_DEFAULT);
+
+    this->curl = curl_easy_init();
+
 }
 
 discord_http::~discord_http() {
+    curl_easy_cleanup(this->curl);
     curl_global_cleanup();
     std::cout << "Http is shutting down!" << std::endl;
 }
 
 void discord_http::send(const std::string& payload, const std::string& channel_id) {
-    struct curl_slist *header = nullptr;
+   struct curl_slist *header = nullptr;
     std::string url, content;
     std::string type = "POST";
 
@@ -36,6 +39,7 @@ void discord_http::send(const std::string& payload, const std::string& channel_i
     content.append(payload);
     
 	auto handle = std::async(std::launch::async, &discord_http::request, this, header, type, url, content);
+
 }
 
 void discord_http::setDisplayName(const std::string& display_name, const std::string& guild_id) {
@@ -59,7 +63,7 @@ void discord_http::setDisplayName(const std::string& display_name, const std::st
 }
 
 void discord_http::request(struct curl_slist *header, const std::string& request_type, const std::string& url, const std::string& content) {
-    CURL *curl = curl_easy_init();
+//    CURL *curl = curl_easy_init();
     if (curl) {
         CURLcode res;
         char auth[256]; //TODO: fix me
@@ -88,14 +92,16 @@ void discord_http::request(struct curl_slist *header, const std::string& request
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
 #endif
         
-        /* Perform the request, res will get the return code */
+        // Perform the request, res will get the return code 
         res = curl_easy_perform(curl); // TODO handle curl_easy_perfrom with: https://curl.haxx.se/libcurl/c/CURLOPT_WRITEFUNCTION.html
-        /* Check for errors */
+        // Check for errors 
         if (res != CURLE_OK)
             fprintf(stderr, "curl_easy_perform() failed: %s\n",
                     curl_easy_strerror(res));
         
-        /* always cleanup */
-        curl_easy_cleanup(curl);
+        // always cleanup 
+	curl_slist_free_all(header);
+       // curl_easy_cleanup(curl);
     }
+
 }
