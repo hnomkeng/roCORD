@@ -31,8 +31,7 @@ core::core(std::string display_name_, std::string token_, std::string presence_,
            int debug_,
            std::shared_ptr<std::vector<std::pair<std::string, std::string>>>
                channel_mapping_,
-           std::unique_ptr<websocket> dwss_,
-           std::unique_ptr<discord_http> dhttps_)
+           std::unique_ptr<websocket> dwss_, std::unique_ptr<http> dhttps_)
     : display_name(display_name_), token(token_), presence(presence_),
       debug(debug_), channel_mapping(channel_mapping_), dwss(std::move(dwss_)),
       dhttps(std::move(dhttps_))
@@ -57,9 +56,9 @@ int core::to_discord(std::string &msg, const std::string &channel,
                      std::string *name)
 {
   /*
-    if (!name)
-          *name = ""; // if webhooks are used, this should be the bot name;
-  */
+     if (!name)
+   *name = ""; // if webhooks are used, this should be the bot name;
+   */
   if (this->get_state() == OFF) {
     ShowError("Bot is not in ON State!");
     return -1;
@@ -263,7 +262,7 @@ void core::handle_close()
 /*
  * Private
  * Gives information about the bot back to discord.
- */
+*/
 void core::handle_cmd_info(const std::string &channel_id)
 {
   this->dhttps->send("Bot created by norm.\nAvailable commands:\n- !info: "

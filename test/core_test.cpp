@@ -34,7 +34,7 @@ class CoreTest : public ::testing::Test {
 	channel_mapping->push_back(std::make_pair<std::string, std::string>("Name", "ID"));
 	
 	std::unique_ptr<rocord::websocket> dwss(new fake_websocket("12345678", "wss://gateway.discord.gg/?v=6&encoding=json"));
-	std::unique_ptr<discord_http> dhttps(new fake_http());	
+	std::unique_ptr<rocord::http> dhttps(new fake_http("12345678"));	
 
 	dcore = std::unique_ptr<rocord::core>(new rocord::core("Test Name", "12345678", "Test Presence", 0, channel_mapping, std::move(dwss), std::move(dhttps)));
 	

@@ -114,8 +114,8 @@ void websocket::on_fail(websocketpp::connection_hdl hdl)
   std::cout << con->get_ec() << " - " << con->get_ec().message() << std::endl;
 
   this->do_shutdown();
-  if(!this->socket_open) // Instead of opening the socket it failed, on_open
-    c.unlock();          // wont be called. 
+  if (!this->socket_open) // Instead of opening the socket it failed, on_open
+    c.unlock();           // wont be called.
 }
 
 void websocket::on_close(websocketpp::connection_hdl hdl)

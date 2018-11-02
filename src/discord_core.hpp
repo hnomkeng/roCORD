@@ -27,7 +27,7 @@ public:
        int debug_,
        std::shared_ptr<std::vector<std::pair<std::string, std::string>>>
            channel_mapping_,
-       std::unique_ptr<websocket> dwss_, std::unique_ptr<discord_http> dhttps_);
+       std::unique_ptr<websocket> dwss_, std::unique_ptr<http> dhttps_);
   virtual ~core();
   void info();
   int to_discord(std::string &msg, const std::string &channel,
@@ -63,7 +63,7 @@ private:
   std::string guild_id = "";
   std::chrono::time_point<std::chrono::system_clock> start_time;
   std::unique_ptr<websocket> dwss;
-  std::unique_ptr<discord_http> dhttps;
+  std::unique_ptr<http> dhttps;
   std::shared_ptr<std::vector<std::pair<std::string, std::string>>>
       channel_mapping; // TODO: has to be shared???
 };

@@ -3,8 +3,10 @@
 
 #include "../src/discord_http.hpp"
 
-class fake_http : public discord_http {
+class fake_http : public rocord::http {
 
+public:
+  fake_http(std::string token) : rocord::http(token) {}
 
 };
 
