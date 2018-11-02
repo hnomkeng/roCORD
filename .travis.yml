@@ -34,9 +34,10 @@ before_install:
     - pip install --user cget
     - cget install nlohmann/json
     - git clone https://github.com/zaphoyd/websocketpp.git
-    - cd rathena
-    - git checkout  
     - git clone https://github.com/rathena/rathena.git
+    - cd rathena
+    - git checkout ab0046cf2c6023ddf2fb54bc4ec2c6886f0098c4
+    - cd ..
 
 install:
     # install cmake
