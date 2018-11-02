@@ -34,6 +34,8 @@ before_install:
     - pip install --user cget
     - cget install nlohmann/json
     - git clone https://github.com/zaphoyd/websocketpp.git
+    - cd rathena
+    - git checkout  
     - git clone https://github.com/rathena/rathena.git
 
 install:

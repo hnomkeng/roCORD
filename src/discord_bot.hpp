@@ -12,7 +12,6 @@
 #include <string>
 #include <stdio.h>
 #include <iostream>
-#include "discord_core.hpp"
 
 #ifndef TESTING
 #include "../../common/timer.hpp"

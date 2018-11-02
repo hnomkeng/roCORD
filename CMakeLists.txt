@@ -12,7 +12,10 @@ set (CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++1y -Wall")
 if (DEFINED TRAVIS OR DEFINED STAND_ALONE)
 	project (roCORD)
 	set (CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -D TESTING")
-	set (roCORD_src src/main.cpp src/clif_testing.cpp src/showmsg_testing.cpp src/discord_bot.cpp src/discord_core.cpp src/discord_error.cpp src/discord_http.cpp src/discord_websocket.cpp test/core_test.cpp test/bot_test.cpp)
+	set (roCORD_src src/main.cpp src/clif_testing.cpp src/showmsg_testing.cpp 
+       src/discord_bot.cpp src/discord_core.cpp src/discord_error.cpp 
+       src/discord_http.cpp src/discord_websocket.cpp test/core_test.cpp 
+       test/bot_test.cpp)
 
 	# Download and unpack googletest at configure time
     	configure_file(CMakeLists.txt.in googletest-download/CMakeLists.txt)
@@ -44,12 +47,14 @@ if (DEFINED TRAVIS OR DEFINED STAND_ALONE)
 		include_directories(${JSON} ${WEBSOCKETPP})
 	else ()
 		message (STATUS "Using travis setup!")
-		include_directories(cget/cget/pkg/nlohmann__json/install/include/ websocketpp/)
+		include_directories(cget/cget/pkg/nlohmann__json/install/include/ 
+                        websocketpp/)
 	endif ()
 
 else () #RELEASE
 	message (STATUS "Using release setup!")
-	set(roCORD_src discord_bot.cpp discord_core.cpp discord_error.cpp discord_http.cpp discord_websocket.cpp)
+	set(roCORD_src discord_bot.cpp discord_core.cpp discord_error.cpp 
+      discord_http.cpp discord_websocket.cpp)
 	include_directories (${JSON} ${WEBSOCKETPP})
 endif ()
 
@@ -63,7 +68,9 @@ find_package (Threads REQUIRED)
 if(NOT APPLE)
 	find_package (ICU COMPONENTS REQUIRED data i18n io le lx test tu uc)
 endif()
-include_directories (${Boost_INCLUDE_DIR} ${ICU_INCLUDE_DIR} ${Iconv_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR} ${CURL_INCLUDE_DIRS})
+include_directories (${Boost_INCLUDE_DIR} ${ICU_INCLUDE_DIR} 
+                     ${Iconv_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR} 
+                     ${CURL_INCLUDE_DIRS})
 
 if (DEFINED TRAVIS OR DEFINED STAND_ALONE)
 	add_executable (roCORD ${roCORD_src})
@@ -72,8 +79,13 @@ else ()
 endif ()
 
 if (DEFINED TRAVIS OR DEFINED STAND_ALONE)
-	target_link_libraries (roCORD ${Boost_LIBRARIES} ${ICU_LIBRARIES} ${Iconv_LIBRARIES} ${OPENSSL_LIBRARIES} ${CURL_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} gtest_main gmock_main)
+	target_link_libraries (roCORD ${Boost_LIBRARIES} ${ICU_LIBRARIES} 
+                         ${Iconv_LIBRARIES} ${OPENSSL_LIBRARIES} 
+                         ${CURL_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} 
+                         gtest_main gmock_main)
 else ()
-	target_link_libraries (roCORD ${Boost_LIBRARIES} ${ICU_LIBRARIES} ${Iconv_LIBRARIES} ${OPENSSL_LIBRARIES} ${CURL_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
+	target_link_libraries (roCORD ${Boost_LIBRARIES} ${ICU_LIBRARIES} 
+                         ${Iconv_LIBRARIES} ${OPENSSL_LIBRARIES} 
+                         ${CURL_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
 endif()
 

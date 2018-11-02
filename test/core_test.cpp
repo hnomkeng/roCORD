@@ -1,6 +1,6 @@
 #include <limits.h>
 #include <stdio.h>
-#include "../src/discord_bot.hpp"
+#include "../src/discord_core.hpp"
 #include "fake_http.hpp"
 #include "fake_websocket.hpp"
 #include "gtest/gtest.h"
@@ -33,10 +33,10 @@ class CoreTest : public ::testing::Test {
 	auto channel_mapping = std::make_shared<std::vector<std::pair<std::string, std::string>>>();
 	channel_mapping->push_back(std::make_pair<std::string, std::string>("Name", "ID"));
 	
-	std::unique_ptr<discord_websocket> dwss(new fake_websocket("12345678", "wss://gateway.discord.gg/?v=6&encoding=json"));
+	std::unique_ptr<rocord::websocket> dwss(new fake_websocket("12345678", "wss://gateway.discord.gg/?v=6&encoding=json"));
 	std::unique_ptr<discord_http> dhttps(new fake_http());	
 
-	dcore = std::unique_ptr<discord_core>(new discord_core("Test Name", "12345678", "Test Presence", 0, channel_mapping, std::move(dwss), std::move(dhttps)));
+	dcore = std::unique_ptr<rocord::core>(new rocord::core("Test Name", "12345678", "Test Presence", 0, channel_mapping, std::move(dwss), std::move(dhttps)));
 	
   }
 
@@ -46,7 +46,7 @@ class CoreTest : public ::testing::Test {
   }
 	
   // Objects declared here can be used by all tests in the test case for CoreTest.
-  std::unique_ptr<discord_core> dcore;
+  std::unique_ptr<rocord::core> dcore;
 };
 
 /*TEST(CoreTest, True){
