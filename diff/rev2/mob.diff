@@ -1,0 +1,5 @@
+42a43,44
+> #include "discord/discord_bot.hpp"
+> 
+2914a2917
+> 					discord_announce_drop(message);
