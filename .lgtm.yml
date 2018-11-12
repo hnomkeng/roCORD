@@ -1,21 +1,12 @@
+path_classifiers:
+  library:
+    - deps
 extraction:
-    cpp:
-      prepare:
-        packages:
-          - libcurl4-openssl-dev
-          - libboost-all-dev
-          - libffi-dev
-          - libssl-dev
-          - libc6
-          - libicu-dev
-      after_prepare:
-        - git clone https://github.com/zaphoyd/websocketpp.git
-        - mkdir build
+  cpp:
+    before_index:
+        - mkdir build # prepare build dir
+    index:
+      build_command:
         - cd build
-      configure:
-        command:
-          cmake .. -G"Unix Makefiles" -DTRAVIS=ON ..
-
-
-          
-      
+        - cmake .. -DSTAND_ALONE=ON -DTESTING=OFF
+        - make
