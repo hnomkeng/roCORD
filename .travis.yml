@@ -30,10 +30,12 @@ before_install:
     - sudo apt-get install libc6
     - sudo apt-get install libicu-dev
     - sudo apt-get install valgrind
+    - cd ..
+    - mv roCORDTesting roCORD
     - git clone https://github.com/rathena/rathena.git
     - cd rathena
     - git checkout ab0046cf2c6023ddf2fb54bc4ec2c6886f0098c4
-    - cd ..
+    - cd ../roCORD
 
 install:
     # prepare travis_stand_alone
@@ -44,25 +46,28 @@ install:
     - cd ..
 
     # prepare travis_rathena 
-    - mkdir rathena/src/map/discord
-    - mkdir rathena/conf/discord
-    - cp CMakeLists.txt rathena/src/map/discord/.
-    - cp src/* rathena/src/map/discord/.
-    - cp config/* rathena/conf/discord/.
-    - cp -r third_party/* rathena/3rdparty/.
-    - patch rathena/src/map/channel.cpp diff/rev2/channel.diff
-    - patch rathena/src/map/map.cpp diff/rev2/map.diff
-    - patch rathena/src/map/script.cpp diff/rev2/script.diff
-    - patch rathena/src/map/CMakeLists.txt diff/rev2/CmakeLists.txt.diff
-    - mkdir rathena/build
-    - cd rathena/build
-    - cmake -G"Unix Makefiles" -DINSTALL_TO_SOURCE=ON ..
-    - cd ../..
+    #    - mkdir ../rathena/src/map/discord
+    #    - mkdir ../rathena/conf/discord
+    #    - cp CMakeLists.txt ../rathena/src/map/discord/.
+    #    - cp src/* ../rathena/src/map/discord/.
+    #    - cp config/* ../rathena/conf/discord/.
+    #    - cp -r third_party/* ../rathena/3rdparty/.
+    #    - cd .. 
+    #    - patch rathena/src/map/channel.cpp roCORD/diff/rev2/channel.diff
+    #    - patch rathena/src/map/map.cpp roCORD/diff/rev2/map.diff
+    #    - patch rathena/src/map/script.cpp roCORD/diff/rev2/script.diff
+    #    - patch rathena/src/map/CMakeLists.txt roCORD/diff/rev2/CmakeLists.txt.diff
+    #    - mkdir rathena/build
+    #    - cd rathena/build
+    #    - cmake -G"Unix Makefiles" -DINSTALL_TO_SOURCE=ON ..
+    #    - cd ../../roCORD
+    - chmod u+x install.sh
+    - ./install.sh
 
 script:
     - cd build/
     - valgrind --error-exitcode=-1 -q ./roCORD
-    - cd ..
+    - cd ../../
 
     - cd rathena/build/
     - make install

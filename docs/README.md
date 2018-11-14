@@ -1,5 +1,9 @@
 ## Overview
-- [Installation](https://github.com/Normynator/roCORDTesting/blob/dev/docs/installation.md)
+- Installation
+  - [Manual installation](https://github.com/Normynator/roCORDTesting/blob/dev/docs/installation_manual_debian.md)
+  - [Debian](https://github.com/Normynator/roCORDTesting/blob/dev/docs/installation_debian.md)
+  - [CentOS]
+  - [Windows]
 - [Configuration](https://github.com/Normynator/roCORDTesting/blob/dev/docs/configuration.md)
   - [Config file](https://github.com/Normynator/roCORDTesting/blob/dev/docs/configuration.md#config-file)
   - [CA Certificate](https://github.com/Normynator/roCORDTesting/blob/dev/docs/configuration.md#ca-certificate)
