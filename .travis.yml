@@ -31,7 +31,7 @@ before_install:
     - sudo apt-get install libicu-dev
     - sudo apt-get install valgrind
     - cd ..
-    - mv roCORDTesting roCORD
+      #- mv roCORDTesting roCORD
     - git clone https://github.com/rathena/rathena.git
     - cd rathena
     - git checkout ab0046cf2c6023ddf2fb54bc4ec2c6886f0098c4

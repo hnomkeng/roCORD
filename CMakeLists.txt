@@ -1,5 +1,5 @@
 message (STATUS "Looking for libs for Discord!")
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required (VERSION 3.6)
 
 set (CMAKE_CXX_STANDARD 11)  # enable C++11 standard
 
@@ -62,7 +62,7 @@ endif ()
 
 set (Boost_USE_STATIC_LIBS ON)
 set (Boost_USE_MULTITHREAD ON)
-find_package (Boost 1.54.0 COMPONENTS REQUIRED system chrono filesystem locale)
+find_package (Boost 1.53.0 COMPONENTS REQUIRED system chrono filesystem locale)
 find_package (Iconv REQUIRED)
 find_package (OpenSSL REQUIRED)
 find_package (CURL REQUIRED)
