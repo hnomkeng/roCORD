@@ -2,18 +2,28 @@
 
 ### Requirements:
   - Using a supported rAthena version.
-  - Debian Stretch or better.
+  - CentOS 7 or better.
   - roCORD folder is placed next to the rAthena folder.
   - The rAthena folder is called "rathena".
 
 ### Installing dependencies and apply patches:
   - Run the following commands (they require sudo permissions):
   ```
-    $ apt-get install libcurl4-openssl-dev
-    $ apt-get install libboost-all-dev
-    $ apt-get install libssl-dev
-    $ apt-get install libicu-dev
+    $ yum install llvm-toolset-7-cmake
+    $ yum install boost boost-devel boost-static
+    $ yum install libicu-devel
+    $ yum install openssl-devel
+    $ yum install libcurl-devel
+
   ```
+  - You can either use:
+    ```
+      scl enable llvm-toolset-7 bash
+    ```
+    or add the following to your .bashrc or .bash_profile:
+    ```
+      source scl_source enable llvm-toolset-7
+    ```
   - Clone the roCORD respository.
   - Place the downloaded files next to your rAthena folder.
   - WARNING: following script diffs your files automatically, it can cause problems if you use other source mods or don't use a supported rA commit.

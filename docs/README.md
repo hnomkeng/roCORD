@@ -2,7 +2,7 @@
 - Installation
   - [Manual installation](https://github.com/Normynator/roCORDTesting/blob/dev/docs/installation_manual_debian.md)
   - [Debian](https://github.com/Normynator/roCORDTesting/blob/dev/docs/installation_debian.md)
-  - [CentOS]
+  - [CentOS](https://github.com/Normynator/roCORDTesting/blob/dev/docs/installation_centos.md)
   - [Windows]
 - [Configuration](https://github.com/Normynator/roCORDTesting/blob/dev/docs/configuration.md)
   - [Config file](https://github.com/Normynator/roCORDTesting/blob/dev/docs/configuration.md#config-file)
