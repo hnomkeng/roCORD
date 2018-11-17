@@ -1,4 +1,4 @@
-# Installation for Debian.
+# Installation for CentOS.
 
 ### Requirements:
   - Using a supported rAthena version.
