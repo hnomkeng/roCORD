@@ -23,11 +23,13 @@ public:
   log();
   virtual ~log();
   void warning(std::string msg);
-  void print(std::string msg, log_type ltype); // TODO copy by value
+  void print(std::string msg, log_type ltype, bool need_sync = false); 
+  // TODO copy by value
   void handle_print();
   void welcome();
 
 private:
+  void do_print(std::shared_ptr<log_entry> entry);
   std::mutex m;
   std::queue<std::shared_ptr<log_entry>> print_queue;
 

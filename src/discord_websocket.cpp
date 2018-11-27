@@ -52,7 +52,6 @@ websocket::websocket(std::string token, std::string uri,
     std::shared_ptr<log> logger)
     : token(token), uri(uri), logger(logger)
 {
-  l
 }
 
 websocketpp::lib::shared_ptr<boost::asio::ssl::context>
@@ -95,9 +94,9 @@ void websocket::do_shutdown()
 {
   if (this->heartbeat_active) {
     this->heartbeat_active = false;
-    logger->print("Waiting for heartbeat thread to finish!", log_type::DEBUG);
+    logger->print("Waiting for heartbeat thread to finish!", log_type::DEBUG, true);
     this->heartbeat_thr.join();
-    logger->print("Heartbeat thread successfully closed!", log_type::DEBUG);
+    logger->print("Heartbeat thread successfully closed!", log_type::DEBUG, true);
   }
   this->started = false; // use type, state = ON, OFF, SHUTDOWN
   auto event_ptr = std::bind(&core::handle_close, std::placeholders::_1);
@@ -107,7 +106,7 @@ void websocket::do_shutdown()
 
 void websocket::on_open(websocketpp::connection_hdl hdl)
 {
-  logger->print("Websocket successfully opened!", log_type::DEBUG);
+  logger->print("Websocket successfully opened!", log_type::DEBUG, true);
   this->start_time = std::chrono::system_clock::now();
   this->socket_open = true;
   c.unlock();
@@ -170,7 +169,7 @@ void websocket::on_message(
 
   try {
     payload = json::parse(msg->get_payload());
-    logger->print(payload, log_type::DEBUG);
+    logger->print(payload, log_type::DEBUG, true);
 
     s = payload.at("s");
 
@@ -263,7 +262,7 @@ void websocket::run()
   if (shutdown)
     return;
   //std::cout << "thread was started" << std::endl;
-  this->logger->print("Websocket thread was started!", log_type::DEBUG);
+  this->logger->print("Websocket thread was started!", log_type::DEBUG, true);
 
   client.init_asio();
 
@@ -291,7 +290,7 @@ void websocket::run()
     
     ss << "Could not create an connection because "
               << errorCode.message();
-    logger->print(ss.str(), log_type::ERROR);
+    logger->print(ss.str(), log_type::ERROR, true);
     c.unlock();
     return;
   }
@@ -363,11 +362,11 @@ void websocket::do_heartbeat()
     if (errorCode) {
       std::stringstream ss;
       ss << "Heartbeat failed because " << errorCode.message();
-      logger->print(ss.str(), log_type::ERROR);
+      logger->print(ss.str(), log_type::ERROR, true);
     }
     std::this_thread::sleep_for(std::chrono::milliseconds{this->interval});
   }
-  logger->print("Heartbeat stopped!", log_type::DEBUG);
+  logger->print("Heartbeat stopped!", log_type::DEBUG, true);
 }
 
 void websocket::start()
@@ -382,7 +381,7 @@ websocket::~websocket()
   
   c.lock();
   //std::cout << "Websocket is shutting down!" << std::endl;
-  logger->print("Websocket is shutting down!", log_type::DEBUG);
+  logger->print("Websocket is shutting down!", log_type::DEBUG, true);
   if (this->started) { // TODO started and shutdown are useless because
                        // the locks sync it already.
     auto test = this->connection->get_handle();
@@ -394,7 +393,7 @@ websocket::~websocket()
       std::cout << e.what() << std::endl;
     }
     //std::cout << "DWSS Connection closing!" << std::endl;
-    logger->print("DWSS Connection closing!", log_type::DEBUG);
+    logger->print("DWSS Connection closing!", log_type::DEBUG, true);
   }
   this->shutdown = true;
   c.unlock();

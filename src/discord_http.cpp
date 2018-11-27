@@ -27,7 +27,7 @@ http::~http()
   curl_easy_cleanup(this->curl);
   curl_global_cleanup();
   //std::cout << "Http is shutting down!" << std::endl;
-  logger->print("Http is shutting down!", log_type::DEBUG);
+  logger->print("Http is shutting down!", log_type::DEBUG, true);
 }
 
 void http::send(const std::string &payload, const std::string &channel_id)
@@ -113,7 +113,7 @@ void http::request(struct curl_slist *header, const std::string &request_type,
     // Check for errors
     if (res != CURLE_OK) 
       logger->print("curl_easy_perform() failed: TODO print error!",
-          log_type::ERROR);
+          log_type::ERROR, true);
       //fprintf(stderr, "curl_easy_perform() failed: %s\n",
       //        curl_easy_strerror(res));
     // always cleanup
