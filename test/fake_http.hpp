@@ -6,7 +6,7 @@
 class fake_http : public rocord::http {
 
 public:
-  fake_http(std::string token) : rocord::http(token) {}
+  fake_http(std::string token, std::shared_ptr<rocord::log> logger) : rocord::http(token, logger) {}
 
 };
 
