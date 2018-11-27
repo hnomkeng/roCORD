@@ -9,6 +9,7 @@
 #ifndef discord_websocket_hpp
 #define discord_websocket_hpp
 
+#include "discord_log.hpp"
 #include <chrono>
 #include <functional>
 #include <nlohmann/json.hpp>
@@ -23,7 +24,7 @@ class core;
 
 class websocket {
 public:
-  websocket(std::string token, std::string uri); // TODO copy by value
+  websocket(std::string token, std::string uri, std::shared_ptr<log> logger); // TODO copy by value
   virtual ~websocket();
   void final();
   std::function<void(core *)> get_next_event();
@@ -61,6 +62,7 @@ private:
   int interval;
   std::thread heartbeat_thr;
   std::thread socket_thr;
+  std::shared_ptr<log> logger;
   websocketpp::client<websocketpp::config::asio_tls_client> client;
   std::queue<std::function<void(core *)>> event_queue;
   websocketpp::client<websocketpp::config::asio_tls_client>::connection_ptr

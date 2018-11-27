@@ -9,6 +9,7 @@
 #ifndef discord_http_hpp
 #define discord_http_hpp
 
+#include "discord_log.hpp"
 #include <curl/curl.h>
 #include <iostream>
 #include <stdio.h>
@@ -17,7 +18,7 @@
 namespace rocord {
 class http {
 public:
-  http(std::string token); // TODO copy by value
+  http(std::string token, std::shared_ptr<log> logger); // TODO copy by value
   virtual ~http();
   void send(const std::string &payload, const std::string &channel_id);
   void setDisplayName(const std::string &display_name,
@@ -26,6 +27,7 @@ public:
 private:
   CURL *curl;
   std::string token; // TODO should be const
+  std::shared_ptr<log> logger;
   void request(struct curl_slist *header,
                const std::string &request_type /* TODO ENUM */,
                const std::string &url, const std::string &content);

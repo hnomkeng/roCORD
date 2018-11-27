@@ -17,24 +17,17 @@
 
 #include "discord_error.hpp"
 
-#ifdef TESTING
-#include "showmsg_testing.hpp"
-#else
-#include "../../common/showmsg.hpp"
-#include "../channel.hpp"
-#include "../clif.hpp"
-#endif
-
 namespace rocord {
 
 core::core(std::string display_name_, std::string token_, std::string presence_,
            int debug_,
            std::shared_ptr<std::vector<std::pair<std::string, std::string>>>
                channel_mapping_,
-           std::unique_ptr<websocket> dwss_, std::unique_ptr<http> dhttps_)
+           std::unique_ptr<websocket> dwss_, std::unique_ptr<http> dhttps_,
+           std::shared_ptr<log> logger_)
     : display_name(display_name_), token(token_), presence(presence_),
       debug(debug_), channel_mapping(channel_mapping_), dwss(std::move(dwss_)),
-      dhttps(std::move(dhttps_))
+      dhttps(std::move(dhttps_)), logger(logger_)
 {
   this->start_time = std::chrono::system_clock::now();
   this->dwss->start();
@@ -60,7 +53,8 @@ int core::to_discord(std::string &msg, const std::string &channel,
    *name = ""; // if webhooks are used, this should be the bot name;
    */
   if (this->get_state() == OFF) {
-    ShowError("Bot is not in ON State!");
+    //ShowError("Bot is not in ON State!");
+    logger->print("Bot is not in ON State!", log_type::WARNING);
     return -1;
   }
 
@@ -122,6 +116,7 @@ void core::handle_events()
   std::function<void(core *)> event = this->dwss->get_next_event();
   if (event)
     event(this);
+  logger->handle_print();
 }
 
 /*
@@ -142,7 +137,8 @@ void core::info()
        it != this->channel_mapping->end(); it++) {
     ss << "\t\t" << it->first << " <-> " << it->second << std::endl; // TODO
   }
-  ShowInfo(ss.str().c_str());
+  //ShowInfo(ss.str().c_str());
+  logger->print(ss.str(), log_type::STATUS);
 }
 
 /*
@@ -151,7 +147,8 @@ void core::info()
  */
 void core::handle_ready(const std::string &guild_id)
 {
-  ShowInfo("Discord: Ready Event!");
+  //ShowInfo("Discord: Ready Event!");
+  logger->print("API: Ready event!", log_type::INFO);
   this->guild_id = guild_id; // TODO
   this->dhttps->setDisplayName(this->display_name,
                                this->guild_id); // init set of display_name
@@ -168,7 +165,8 @@ void core::handle_message_create(const std::string &author,
                                  const std::string &nick, std::string &content,
                                  const std::string &d_channel)
 {
-  ShowInfo("Discord: Message Event!");
+  //ShowInfo("Discord: Message Event!");
+  logger->print("API: Message Event!", log_type::INFO);
   if (author == this->display_name)
     return;
 
@@ -184,7 +182,8 @@ void core::handle_message_create(const std::string &author,
   }
 
   if (channel.empty()) {
-    ShowWarning("Discord channel has no mapping!");
+    //ShowWarning("Discord channel has no mapping!");
+    logger->print("Channel has no mapping!", log_type::INFO);
     return;
   }
 
@@ -192,7 +191,8 @@ void core::handle_message_create(const std::string &author,
 #ifndef TESTING
   Channel *r_channel = channel_name2channel((char *)channel.c_str(), NULL, 0);
   if (!r_channel) {
-    ShowError("[roCORD] Channel was not found!");
+    //ShowError("[roCORD] Channel was not found!");
+    logger->print("Channel was not found!", log_type::ERROR);
     return;
   }
 
@@ -221,7 +221,8 @@ void core::handle_message_create(const std::string &author,
   msg.append(content);
 
 #ifdef TESTING
-  ShowInfo(msg.c_str());
+  //ShowInfo(msg.c_str());
+  logger->print(msg, log_type::INFO);
 #else
   clif_channel_msg(r_channel, msg.c_str(), r_channel->color);
 #endif
@@ -233,8 +234,10 @@ void core::handle_message_create(const std::string &author,
  */
 void core::handle_guild_create()
 {
-  ShowInfo("Discord: GuildCreate Event");
-  std::cout << "GuildCreate has to be handled!" << std::endl;
+  //ShowInfo("Discord: GuildCreate Event");
+  //std::cout << "GuildCreate has to be handled!" << std::endl;
+  logger->print("API: GuildCreate Event", log_type::INFO);
+  logger->print("GuildCreate has to be handled!", log_type::DEBUG);
 }
 
 /*
@@ -243,7 +246,8 @@ void core::handle_guild_create()
  */
 void core::handle_hello(int heartbeat_interval)
 {
-  ShowInfo("Discord: Hello Event!");
+//  ShowInfo("Discord: Hello Event!");
+  logger->print("API: Hello Event!", log_type::DEBUG);
   this->dwss->start_heartbeat(heartbeat_interval / 2); // TODO configable
   this->dwss->send_identify(this->token, this->presence);
   this->state = CONNECTING;
@@ -253,9 +257,11 @@ void core::handle_close()
 {
   this->dhttps->send("Debugging: WebSocket was closed! Trying to restart!",
                      channel_mapping->begin()->second);
-  ShowError("WebSocket was closed! Trying to restart!");
+  //ShowError("WebSocket was closed! Trying to restart!");
+  logger->print("Websocket was closed! Trying to restart!", log_type::STATUS);
   this->dwss.reset(new websocket(
-      this->token, "wss://gateway.discord.gg/?v=6&encoding=json"));
+      this->token, "wss://gateway.discord.gg/?v=6&encoding=json",
+      this->logger));
   this->dwss->start();
 }
 

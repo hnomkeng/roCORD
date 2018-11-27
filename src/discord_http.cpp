@@ -13,7 +13,8 @@
 using namespace nlohmann;
 
 namespace rocord {
-http::http(std::string token)
+http::http(std::string token, std::shared_ptr<log> logger)
+  : logger(logger)
 {
   this->token = token;
   curl_global_init(CURL_GLOBAL_DEFAULT);
@@ -25,7 +26,8 @@ http::~http()
 {
   curl_easy_cleanup(this->curl);
   curl_global_cleanup();
-  std::cout << "Http is shutting down!" << std::endl;
+  //std::cout << "Http is shutting down!" << std::endl;
+  logger->print("Http is shutting down!", log_type::DEBUG);
 }
 
 void http::send(const std::string &payload, const std::string &channel_id)
@@ -65,6 +67,11 @@ void http::setDisplayName(const std::string &display_name,
                            type, url, content);
 }
 
+/*size_t http::write_callback(char *ptr, size_t size, size_t nmemb, void *userdata)
+{
+
+}*/
+
 void http::request(struct curl_slist *header, const std::string &request_type,
                    const std::string &url, const std::string &content)
 {
@@ -98,15 +105,17 @@ void http::request(struct curl_slist *header, const std::string &request_type,
 #ifdef SKIP_HOSTNAME_VERIFICATION
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
 #endif
-
+    
+//    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, http::write_callback); 
     // Perform the request, res will get the return code
     res = curl_easy_perform(curl); // TODO handle curl_easy_perfrom with:
     // https://curl.haxx.se/libcurl/c/CURLOPT_WRITEFUNCTION.html
     // Check for errors
-    if (res != CURLE_OK)
-      fprintf(stderr, "curl_easy_perform() failed: %s\n",
-              curl_easy_strerror(res));
-
+    if (res != CURLE_OK) 
+      logger->print("curl_easy_perform() failed: TODO print error!",
+          log_type::ERROR);
+      //fprintf(stderr, "curl_easy_perform() failed: %s\n",
+      //        curl_easy_strerror(res));
     // always cleanup
     curl_slist_free_all(header);
     // curl_easy_cleanup(curl);

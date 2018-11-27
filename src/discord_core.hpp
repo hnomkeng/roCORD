@@ -11,6 +11,7 @@
 
 #include "discord_http.hpp"
 #include "discord_websocket.hpp"
+#include "discord_log.hpp"
 #include <chrono>
 #include <functional>
 #include <queue>
@@ -27,7 +28,8 @@ public:
        int debug_,
        std::shared_ptr<std::vector<std::pair<std::string, std::string>>>
            channel_mapping_,
-       std::unique_ptr<websocket> dwss_, std::unique_ptr<http> dhttps_);
+       std::unique_ptr<websocket> dwss_, std::unique_ptr<http> dhttps_,
+       std::shared_ptr<log> logger_);
   virtual ~core();
   void info();
   int to_discord(std::string &msg, const std::string &channel,
@@ -64,6 +66,7 @@ private:
   std::chrono::time_point<std::chrono::system_clock> start_time;
   std::unique_ptr<websocket> dwss;
   std::unique_ptr<http> dhttps;
+  std::shared_ptr<log> logger;
   std::shared_ptr<std::vector<std::pair<std::string, std::string>>>
       channel_mapping; // TODO: has to be shared???
 };

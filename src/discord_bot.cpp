@@ -29,6 +29,7 @@ std::unique_ptr<rocord::core> dcore;
 void discord_handle()
 {
   dcore->handle_events();
+  // handle logs
 }
 #else
 /*
@@ -37,6 +38,7 @@ void discord_handle()
 TIMER_FUNC(discord_handle)
 {
   dcore->handle_events();
+  // handle logs
   add_timer(gettick() + 100, discord_handle, 0, 0);
   return 0;
 }
@@ -151,11 +153,11 @@ int discord_init()
     std::cerr << e.what() << std::endl;
     return -1;
   }
-
+  std::shared_ptr<rocord::log> logger(new rocord::log());
   std::unique_ptr<rocord::websocket> dwss(new rocord::websocket(
-      token, "wss://gateway.discord.gg/?v=6&encoding=json")); // TODO use
+      token, "wss://gateway.discord.gg/?v=6&encoding=json", logger)); // TODO use
                                                               // factory pattern
-  std::unique_ptr<rocord::http> dhttps(new rocord::http(token));
+  std::unique_ptr<rocord::http> dhttps(new rocord::http(token, logger));
 
   /* TODO:
    *  Validate channel mapping !
@@ -165,7 +167,7 @@ int discord_init()
    */
   dcore = std::unique_ptr<rocord::core>(
       new rocord::core(display_name, token, presence, debug, channel_mapping,
-                       std::move(dwss), std::move(dhttps)));
+                       std::move(dwss), std::move(dhttps), logger));
 #ifndef TESTING
   add_timer_func_list(discord_handle, "discord_handle");
   add_timer_interval(gettick() + 100, discord_handle, 0, 0,
