@@ -93,7 +93,8 @@ void discord_announce_drop(const char *msg)
 int discord_init()
 {
   logger = std::shared_ptr<rocord::log>(new rocord::log());
-  ShowStatus("Loading roCORD by norm\n");
+  //ShowStatus("Loading roCORD by norm\n");
+  logger->welcome();
 #ifdef TESTING
   std::ifstream ifs("../config/config.json"); // TODO: fix hardcoded path!
 #else

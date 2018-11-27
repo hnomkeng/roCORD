@@ -61,4 +61,9 @@ void log::handle_print()
   print_queue.pop();
   m.unlock();
 }
+
+void log::welcome()
+{
+  ShowStatus("Loading roCORD by norm\n");
+}
 } // namespace rocord

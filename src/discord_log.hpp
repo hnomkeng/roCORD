@@ -25,6 +25,7 @@ public:
   void warning(std::string msg);
   void print(std::string msg, log_type ltype); // TODO copy by value
   void handle_print();
+  void welcome();
 
 private:
   std::mutex m;
