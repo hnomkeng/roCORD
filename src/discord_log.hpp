@@ -29,7 +29,7 @@ public:
   void welcome();
 
 private:
-  void do_print(std::shared_ptr<log_entry> entry);
+  void do_print(log_entry& entry);
   std::mutex m;
   std::queue<std::shared_ptr<log_entry>> print_queue;
 

@@ -27,7 +27,7 @@ void log::print(std::string message, log_type ltype, bool need_sync)
   if (level & ltype) {
     std::shared_ptr<log_entry> entry(new log_entry(message, ltype));
     if (!need_sync) {
-      do_print(entry);
+      do_print(*entry);
     } else {
       std::lock_guard<std::mutex> lock(m);
       print_queue.push(entry);
@@ -49,7 +49,7 @@ void log::handle_print()
   print_queue.pop();
   m.unlock();
 
-  do_print(entry);
+  do_print(*entry);
 }
 
 void log::welcome()
@@ -57,20 +57,20 @@ void log::welcome()
   ShowStatus("Loading roCORD by norm\n");
 }
 
-void log::do_print(std::shared_ptr<log_entry> entry)
+void log::do_print(log_entry& entry)
 {
-  switch(entry->get_type()) {
+  switch(entry.get_type()) {
     case log_type::WARNING:
-      ShowWarning(entry->get_message().c_str());
+      ShowWarning(entry.get_message().c_str());
       break;
     case log_type::INFO:
-      ShowInfo(entry->get_message().c_str());
+      ShowInfo(entry.get_message().c_str());
       break;
     case log_type::STATUS:
-      ShowStatus(entry->get_message().c_str());
+      ShowStatus(entry.get_message().c_str());
       break;
     case log_type::ERROR:
-      ShowError(entry->get_message().c_str());
+      ShowError(entry.get_message().c_str());
       break;
     default:
       ShowError("[roCORD]: error in handle print");

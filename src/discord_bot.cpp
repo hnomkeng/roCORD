@@ -14,13 +14,6 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-#ifdef TESTING
-#include "showmsg_testing.hpp"
-#else
-#include "../../common/showmsg.hpp"
-#include "../../common/timer.hpp"
-#endif
-
 using namespace nlohmann;
 
 std::unique_ptr<rocord::core> dcore;
