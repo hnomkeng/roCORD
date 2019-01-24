@@ -11,12 +11,12 @@
 
 #include <stdio.h>
 
-void ShowMessage(const char *msg);
-void ShowStatus(const char *msg);
-void ShowInfo(const char *msg);
-void ShowNotice(const char *msg);
-void ShowWarning(const char *msg);
-void ShowDebug(const char *msg);
-void ShowError(const char *msg);
+void ShowMessage(const char* format, ...);
+void ShowStatus(const char* format, ...);
+void ShowInfo(const char* format, ...);
+void ShowNotice(const char* format, ...);
+void ShowWarning(const char* format, ...);
+void ShowDebug(const char* format, ...);
+void ShowError(const char* format, ...);
 
 #endif /* showmsg_testing_hpp */

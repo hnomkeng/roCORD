@@ -9,70 +9,39 @@ matrix:
         apt:
             sources:
             - ubuntu-toolchain-r-test
-            #- sourceline: deb https://dl.bintray.com/solvingj/public-deb unstable main
             packages:
                 - g++-7
-              #- libcurl4-openssl-dev
-              #- libboost-all-dev
-              #- libffi-dev
-              #- libssl-dev
-              #- libicu-dev
-              #- libc6
     env:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 
 before_install:
     - eval "${MATRIX_EVAL}"
-    - git clone https://github.com/Kitware/CMake.git 
     - sudo apt-get install libcurl4-openssl-dev
     - sudo apt-get install libboost-all-dev
-    - sudo apt-get install libffi-dev 
     - sudo apt-get install libssl-dev
     - sudo apt-get install libc6
     - sudo apt-get install libicu-dev
     - sudo apt-get install valgrind
-    - pip install --user cget
-    - cget install nlohmann/json
-    - git clone https://github.com/zaphoyd/websocketpp.git
+    - cd ..
     - git clone https://github.com/rathena/rathena.git
     - cd rathena
     - git checkout ab0046cf2c6023ddf2fb54bc4ec2c6886f0098c4
-    - cd ..
+    - cd ../roCORD
 
 install:
-    # install cmake
-    - cd CMake
-    - ./bootstrap 
-    - sudo make
-    - sudo make install
-    - cd ..
-
     # prepare travis_stand_alone
     - mkdir build
     - cd build
-    - /usr/local/bin/cmake -DTRAVIS=ON ..
+    - cmake -DTRAVIS=ON ..
     - make
     - cd ..
-
-    # prepare travis_rathena 
-    - mkdir rathena/src/map/discord
-    - mkdir rathena/conf/discord
-    - cp CMakeLists.txt rathena/src/map/discord/.
-    - cp src/* rathena/src/map/discord/.
-    - cp config/* rathena/conf/discord/.
-    - patch rathena/src/map/channel.cpp diff/rev2/channel.diff
-    - patch rathena/src/map/map.cpp diff/rev2/map.diff
-    - patch rathena/src/map/script.cpp diff/rev2/script.diff
-    - patch rathena/src/map/CMakeLists.txt diff/rev2/CmakeLists.txt.diff
-    - mkdir rathena/build
-    - cd rathena/build
-    - /usr/local/bin/cmake -G"Unix Makefiles" -DINSTALL_TO_SOURCE=ON -DJSON=../../../../cget/cget/pkg/nlohmann__json/install/include/ -DWEBSOCKETPP=../../../../websocketpp ..
-    - cd ../..
+    - chmod u+x install.sh
+    - ./install.sh
 
 script:
     - cd build/
     - valgrind --error-exitcode=-1 -q ./roCORD
-    - cd ..
+    - cd ../../
 
     - cd rathena/build/
     - make install

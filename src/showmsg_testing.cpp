@@ -7,29 +7,76 @@
 //
 
 #include "showmsg_testing.hpp"
-#include <iostream>
+#include <cstdarg>
+#include <stdio.h>
 
-void ShowMessage(const char *msg) {
-    std::cout << "[Message]: " << msg << std::endl;
+void
+ShowMessage(const char* format, ...)
+{
+  va_list args;
+  va_start(args, format);
+  vprintf(format, args);
+  va_end(args);
 }
-void ShowStatus(const char *msg) {
-    std::cout << "[Status]: " << msg << std::endl;
+void
+ShowStatus(const char* format, ...)
+{
+  va_list args;
+  va_start(args, format);
+  vprintf(format, args);
+  va_end(args);
 }
-void ShowInfo(const char *msg) {
-    std::cout << "[Info]: " << msg << std::endl;
+
+void
+ShowInfo(const char* format, ...)
+{
+  va_list args;
+  va_start(args, format);
+  vprintf(format, args);
+  va_end(args);
 }
-void ShowNotice(const char *msg) {
-    std::cout << "[Notice]: " << msg << std::endl;
+
+void
+ShowNotice(const char* format, ...)
+{
+  va_list args;
+  va_start(args, format);
+  vprintf(format, args);
+  va_end(args);
 }
-void ShowWarning(const char *msg) {
-    std::cout << "[Warning]: " << msg << std::endl;
+
+void
+ShowWarning(const char* format, ...)
+{
+  va_list args;
+  va_start(args, format);
+  vprintf(format, args);
+  va_end(args);
 }
-void ShowDebug(const char *msg) {
-    std::cout << "[Debug]: " << msg << std::endl;
+
+void
+ShowDebug(const char* format, ...)
+{
+  va_list args;
+  va_start(args, format);
+  vprintf(format, args);
+  va_end(args);
 }
-void ShowError(const char *msg) {
-    std::cout << "[Error]: " << msg << std::endl;
+
+void
+ShowError(const char* format, ...)
+{
+  va_list args;
+  va_start(args, format);
+  vprintf(format, args);
+  va_end(args);
 }
-void ShowFatalError(const char *msg) {
-    std::cout << "[Message]: " << msg << std::endl;
+
+void
+ShowFatalError(const char* format, ...)
+{
+  va_list args;
+  va_start(args, format);
+  vprintf(format, args);
+  va_end(args);
 }

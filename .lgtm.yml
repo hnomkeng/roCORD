@@ -1,0 +1,12 @@
+path_classifiers:
+  library:
+    - deps
+extraction:
+  cpp:
+    before_index:
+        - mkdir build # prepare build dir
+    index:
+      build_command:
+        - cd build
+        - cmake .. -DSTAND_ALONE=ON -DTESTING=OFF
+        - make
