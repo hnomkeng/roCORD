@@ -19,7 +19,7 @@ enum log_type
   info = 0x02,
   status = 0x04,
   warning = 0x08,
-  error = 0x0C
+  error = 0x10
 };
 
 class log_entry
