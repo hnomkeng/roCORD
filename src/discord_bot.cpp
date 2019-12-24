@@ -141,11 +141,11 @@ discord_restart(const std::string& type)
  * info:		2
  * status:	4
  * warning: 8
- * error:		12
+ * error:		16
  *
  * now you can combine any log levels like this:
- *	error, warning and status => 12 + 8 + 4 = 24
- *	so log_level would be 24.
+ *	error, warning and status => 16 + 8 + 4 = 28
+ *	so log_level would be 28.
  */
 int
 discord_init()
